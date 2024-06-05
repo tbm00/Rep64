@@ -1,0 +1,5 @@
+main: dev.tbm00.spigot.rep64.App
+author: tbm00
+name: Rep64
+version: 0.0-SNAPSHOT-1
+api-version: 1.17
