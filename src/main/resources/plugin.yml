@@ -1,5 +1,5 @@
-main: dev.tbm00.spigot.rep64.App
+main: dev.tbm00.spigot.rep64.Rep64
 author: tbm00
 name: Rep64
-version: 0.0-SNAPSHOT-1
+version: ${project.version}
 api-version: 1.17
