@@ -53,17 +53,17 @@ public class MySQLConnection {
 
     public void createPlayerEntry(PlayerEntry player) throws SQLException {
         PreparedStatement statement = getConnection()
-                .prepareStatement("INSERT INTO rep64_players(uuid, username, rep_avg, rep_avg_last, rep_staff_modifier, rep_shown, rep_count, last_login, last_logout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                .prepareStatement("INSERT INTO rep64_players(uuid, username, rep_avg, rep_avg_last, rep_staff_modifier, rep_shown, rep_shown_last, rep_count, last_login, last_logout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         statement.setString(1, player.getPlayerUUID());
         statement.setString(2, player.getPlayerUsername());
         statement.setDouble(3, player.getRepAverage());
         statement.setDouble(4, player.getRepAverageLast());
         statement.setInt(5, player.getRepStaffModifier());
         statement.setDouble(6, player.getRepShown());
-        statement.setDouble(6, player.getRepShownLast());
-        statement.setInt(7, player.getRepCount());
-        statement.setDate(8, new Date(player.getLastLogin().getTime()));
-        statement.setDate(9, new Date(player.getLastLogout().getTime()));
+        statement.setDouble(7, player.getRepShownLast());
+        statement.setInt(8, player.getRepCount());
+        statement.setDate(9, new Date(player.getLastLogin().getTime()));
+        statement.setDate(10, new Date(player.getLastLogout().getTime()));
 
         statement.executeUpdate();
         statement.close();
@@ -72,16 +72,16 @@ public class MySQLConnection {
 
     public void updatePlayerEntry(PlayerEntry player) throws SQLException {
         PreparedStatement statement = getConnection()
-                .prepareStatement("UPDATE rep64_players SET rep_avg = ?, rep_avg_last = ?, rep_staff_modifier = ?, rep_shown = ?, rep_count = ?, last_login = ?, last_logout = ? WHERE uuid = ?");
+                .prepareStatement("UPDATE rep64_players SET rep_avg = ?, rep_avg_last = ?, rep_staff_modifier = ?, rep_shown = ?, rep_shown_last, rep_count = ?, last_login = ?, last_logout = ? WHERE uuid = ?");
         statement.setDouble(1, player.getRepAverage());
         statement.setDouble(2, player.getRepAverageLast());
         statement.setInt(3, player.getRepStaffModifier());
         statement.setDouble(4, player.getRepShown());
-        statement.setDouble(4, player.getRepShownLast());
-        statement.setInt(5, player.getRepCount());
-        statement.setDate(6, new Date(player.getLastLogin().getTime()));
-        statement.setDate(7, new Date(player.getLastLogout().getTime()));
-        statement.setString(8, player.getPlayerUUID());
+        statement.setDouble(5, player.getRepShownLast());
+        statement.setInt(6, player.getRepCount());
+        statement.setDate(7, new Date(player.getLastLogin().getTime()));
+        statement.setDate(8, new Date(player.getLastLogout().getTime()));
+        statement.setString(9, player.getPlayerUUID());
 
         statement.executeUpdate();
         statement.close();
@@ -112,7 +112,7 @@ public class MySQLConnection {
                     resultSet.getDouble("rep_avg_last"),
                     resultSet.getInt("rep_staff_modifier"),
                     resultSet.getDouble("rep_shown"),
-                    resultSet.getDouble("rep_shown_shown"),
+                    resultSet.getDouble("rep_shown_last"),
                     resultSet.getInt("rep_count"),
                     resultSet.getDate("last_login"),
                     resultSet.getDate("last_logout"));

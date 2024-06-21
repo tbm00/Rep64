@@ -13,11 +13,9 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.sql.SQLException;
-
 public class RepCommand implements TabExecutor {
     private MySQLConnection database;
-    private String[] subCommands = new String[]{"reload"};
+    private String[] subCommands = new String[]{""};
 
     public RepCommand(MySQLConnection database) {
         this.database = database;
@@ -30,13 +28,13 @@ public class RepCommand implements TabExecutor {
                 sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
                 return true;
             }
-            Player player = (Player) sender;
+            Player initiator = (Player) sender;
             try {
-                PlayerEntry playerEntry = database.getPlayerByUUID(player.getUniqueId().toString());
+                PlayerEntry playerEntry = database.getPlayerByUUID(initiator.getUniqueId().toString());
                 double repShown = playerEntry.getRepShown();
-                player.sendMessage(ChatColor.GREEN + "Your reputation: " + repShown);
+                initiator.sendMessage(ChatColor.GREEN + "Your reputation: " + repShown);
             } catch (Exception e) {
-                player.sendMessage(ChatColor.RED + "An error occurred while fetching your reputation.");
+                initiator.sendMessage(ChatColor.RED + "An error occurred while fetching your reputation.");
                 e.printStackTrace();
             }
         }
@@ -56,13 +54,24 @@ public class RepCommand implements TabExecutor {
                 }
             }
             else {
-                Player player = (Player) sender;
+                Player initiator = (Player) sender;
                 String targetName = args[0];
-                try {
-                    Double targetRepShown = database.getPlayerByUUID(targetName).getRepShown();
-                    player.sendMessage(ChatColor.GREEN + targetName + " reputation: " + targetRepShown);
+                try { 
+                    if (database.getPlayerByUsername(targetName) == null || targetName == null) {
+                        initiator.sendMessage(ChatColor.RED + "An error occurred while fetching their reputation.");
+                        return true;
+                    } else {
+                        try {
+                            Double targetRepShown = database.getPlayerByUUID(targetName).getRepShown();
+                            initiator.sendMessage(ChatColor.GREEN + targetName + " reputation: " + targetRepShown);
+                        } catch (Exception e) {
+                            initiator.sendMessage(ChatColor.RED + "An exception occurred while fetching their reputation.");
+                            e.printStackTrace();
+                            return true;
+                        }
+                    }
                 } catch (Exception e) {
-                    player.sendMessage(ChatColor.RED + "An error occurred while fetching their reputation.");
+                    initiator.sendMessage(ChatColor.RED + "An exception occurred while fetching their reputation.");
                     e.printStackTrace();
                     return true;
                 }
@@ -82,8 +91,22 @@ public class RepCommand implements TabExecutor {
 
             try {
                 rep = Integer.parseInt(args[1]);
+                if (!(-1 < rep && rep < 11)) {
+                    sender.sendMessage(ChatColor.RED + "The reputation value must be between 0-10.");
+                }
             } catch (Exception e) {
                 sender.sendMessage(ChatColor.RED + "The reputation value must be a number.");
+                return true;
+            }
+
+            try { 
+                if (database.getPlayerByUsername(targetName) == null || targetName == null) {
+                    initiator.sendMessage(ChatColor.RED + "An error occurred while fetching their data.");
+                    return true;
+                }
+            } catch (Exception e) {
+                initiator.sendMessage(ChatColor.RED + "An exception occurred while fetching their data.");
+                e.printStackTrace();
                 return true;
             }
             
