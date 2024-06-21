@@ -23,7 +23,7 @@ public class RepListener implements Listener {
         PlayerEntry playerEntry = database.getPlayerByUUID(player.getUniqueId().toString());
 
         if (playerEntry == null) {
-            playerEntry = new PlayerEntry(player.getUniqueId().toString(), player.getName(), 5, 0, 0, 0.0, 0, new Date(), new Date());
+            playerEntry = new PlayerEntry(player.getUniqueId().toString(), player.getName(), 0.0, 0.0, 0, 5.0, 0, new Date(), new Date());
             database.createPlayerEntry(playerEntry);
         }
         return playerEntry;

@@ -43,8 +43,8 @@ public class MySQLConnection {
         Statement statement = getConnection().createStatement();
 
         //Create the tables
-        String playersTable = "CREATE TABLE IF NOT EXISTS rep64_players (uuid VARCHAR(36) PRIMARY KEY, username STRING, rep_avg DOUBLE, rep_avg_last DOUBLE, rep_staff_modifier INT, rep_shown DOUBLE, rep_count INT, last_login DATE, last_logout DATE)";
-        String repsTable = "CREATE TABLE IF NOT EXISTS rep64_reps (id INT AUTO_INCREMENT PRIMARY KEY, initiator_UUID STRING, receiver_UUID STRING, rep INT)";
+        String playersTable = "CREATE TABLE IF NOT EXISTS rep64_players (uuid VARCHAR(36) PRIMARY KEY, username VARCHAR(16), rep_avg DOUBLE, rep_avg_last DOUBLE, rep_staff_modifier INT, rep_shown DOUBLE, rep_count INT, last_login DATE, last_logout DATE)";
+        String repsTable = "CREATE TABLE IF NOT EXISTS rep64_reps (id INT AUTO_INCREMENT PRIMARY KEY, initiator_UUID VARCHAR(36), receiver_UUID VARCHAR(36), rep INT)";
 
         statement.execute(playersTable);
         statement.execute(repsTable);
