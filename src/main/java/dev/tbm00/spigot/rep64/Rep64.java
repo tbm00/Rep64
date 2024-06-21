@@ -3,7 +3,6 @@ package dev.tbm00.spigot.rep64;
 import dev.tbm00.spigot.rep64.db.MySQLConnection;
 import dev.tbm00.spigot.rep64.listeners.Commands;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import java.sql.*;
 
 public class Rep64 extends JavaPlugin {
@@ -25,7 +24,6 @@ public class Rep64 extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new Commands(database), this);
-
     }
 
     @Override
