@@ -3,10 +3,19 @@ package dev.tbm00.spigot.rep64.db;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
 import dev.tbm00.spigot.rep64.model.RepEntry;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.configuration.file.FileConfiguration;
 
 public class MySQLConnection {
 
     private Connection connection;
+    FileConfiguration fileConfiguration;
+
+    public MySQLConnection(FileConfiguration fileConfiguration) {
+        this.fileConfiguration = fileConfiguration;
+    }
 
     public Connection getConnection() throws SQLException {
         // If connection already established, return it
@@ -15,13 +24,13 @@ public class MySQLConnection {
         }
 
         String prefix = "jdbc:mysql://";
-        String host = "localhost";
-        String port = "3306";
-        String database = "rep64";
-        String options = "?autoReconnect=true";
+        String host = fileConfiguration.getString("host");
+        String port = fileConfiguration.getString("port");
+        String database = fileConfiguration.getString("database");
+        String options = fileConfiguration.getString("options");
         String url = prefix + host + ":" + port + "/" + database + options;
-        String user = "root";
-        String password = "password";
+        String user = fileConfiguration.getString("username");
+        String password = fileConfiguration.getString("password");
 
         Connection connection = DriverManager.getConnection(url, user, password);
         this.connection = connection;
@@ -86,7 +95,7 @@ public class MySQLConnection {
         statement.close();
     }
 
-    public PlayerEntry findPlayerByUsername(String username) throws SQLException {
+    public PlayerEntry getPlayerByUsername(String username) throws SQLException {
         PreparedStatement statement = getConnection()
                 .prepareStatement("SELECT * FROM rep64_players WHERE username = ?");
         statement.setString(1, username);
@@ -111,7 +120,7 @@ public class MySQLConnection {
         return null;
     }
 
-    public PlayerEntry findPlayerByUUID(String uuid) throws SQLException {
+    public PlayerEntry getPlayerByUUID(String uuid) throws SQLException {
         PreparedStatement statement = getConnection()
                 .prepareStatement("SELECT * FROM rep64_players WHERE uuid = ?");
         statement.setString(1, uuid);
@@ -145,12 +154,36 @@ public class MySQLConnection {
         RepEntry repEntry = null;
         if (resultSet.next()) {
             repEntry = new RepEntry(resultSet.getInt("id"),
-                    resultSet.getString("initiatorUUID"),
-                    resultSet.getString("receiverUUID"),
+                    resultSet.getString("initiator_UUID"),
+                    resultSet.getString("receiver_UUID"),
                     resultSet.getInt("rep"));
         }
         statement.close();
         return repEntry;
+    }
+
+    public double calculateRep(String UUID) throws SQLException {
+        PreparedStatement statement = getConnection()
+                .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?");
+        statement.setString(1, UUID);
+
+        ResultSet repResultSet = statement.executeQuery();
+        List<Double> repList = new ArrayList<>();
+
+        while(repResultSet.next()) {
+            repList.add((double) repResultSet.getInt("rep"));
+        }
+        statement.close();
+
+        if (repList.isEmpty()) return 5.0;
+
+        double sum = 0.0;
+        for (double rep : repList) sum += rep;
+        double average = (sum / repList.size());
+
+        PlayerEntry player = getPlayerByUUID(UUID);
+
+        return average + player.getRepStaffModifier();
     }
 
     public void createRepEntry(String initiatorUUID, String receiverUUID, int rep) throws SQLException {
