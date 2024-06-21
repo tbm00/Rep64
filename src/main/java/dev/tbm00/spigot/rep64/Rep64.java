@@ -1,9 +1,10 @@
 package dev.tbm00.spigot.rep64;
 
-import dev.tbm00.spigot.rep64.db.MySQLConnection;
-import dev.tbm00.spigot.rep64.listeners.RepListener;
-//import dev.tbm00.spigot.rep64.model.*;
+import dev.tbm00.spigot.rep64.data.MySQLConnection;
+import dev.tbm00.spigot.rep64.listener.PlayerJoinLeave;
+import dev.tbm00.spigot.rep64.command.RepCommand;
 
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -27,7 +28,7 @@ public class Rep64 extends JavaPlugin {
         this.saveDefaultConfig();
         FileConfiguration fileConfiguration = this.getConfig();
 
-        //JDBC - Java Database Connectivity API
+        // Connect to MySQL
         this.database = new MySQLConnection(fileConfiguration); 
         try {
             this.database.initializeDatabase();
@@ -36,12 +37,18 @@ public class Rep64 extends JavaPlugin {
             System.out.println("Could not initialize database.");
         }
 
-        getServer().getPluginManager().registerEvents(new RepListener(database), this);
+        // Register Listener
+        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(database), this);
+
+        // Register Commands
+        RepCommand repCommand = new RepCommand(this.database);
+        PluginCommand rep = this.getCommand("rep");
+        rep.setTabCompleter(repCommand);
+        rep.setExecutor(repCommand);
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("Goodbye, Console!");
     }
 
     private void log(String... strings) {

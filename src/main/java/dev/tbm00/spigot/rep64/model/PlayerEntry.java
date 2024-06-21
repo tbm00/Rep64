@@ -10,12 +10,13 @@ public class PlayerEntry {
     private double repAverageLast;
     private int repStaffModifier;
     private double repShown;
+    private double repShownLast;
     private int repCount;
     private Date lastLogin;
     private Date lastLogout;
 
     public PlayerEntry(String playerUUID, String playerUsername,
-                double repAverage, double repAverageLast, int repStaffModifier, double repShown, int repCount,
+                double repAverage, double repAverageLast, int repStaffModifier, double repShown, double repShownLast, int repCount,
                 Date lastLogin, Date lastLogout) {
         this.playerUUID = playerUUID;
         this.playerUsername = playerUsername;
@@ -23,6 +24,7 @@ public class PlayerEntry {
         this.repAverageLast = repAverageLast;
         this.repStaffModifier = repStaffModifier;
         this.repShown = repShown;
+        this.repShownLast = repShownLast;
         this.repCount = repCount;
         this.lastLogin = lastLogin;
         this.lastLogout = lastLogout;
@@ -74,6 +76,14 @@ public class PlayerEntry {
 
     public void setRepShown(double repShown) {
         this.repShown = repShown;
+    }
+
+    public double getRepShownLast() {
+        return repShownLast;
+    }
+
+    public void setRepShownLast(double repShownLast) {
+        this.repShownLast = repShownLast;
     }
 
     public int getRepCount() {

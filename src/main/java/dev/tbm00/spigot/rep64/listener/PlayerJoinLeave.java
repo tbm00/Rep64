@@ -1,8 +1,7 @@
-package dev.tbm00.spigot.rep64.listeners;
+package dev.tbm00.spigot.rep64.listener;
 
-import dev.tbm00.spigot.rep64.db.MySQLConnection;
+import dev.tbm00.spigot.rep64.data.MySQLConnection;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
-import dev.tbm00.spigot.rep64.model.RepEntry;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,10 +11,10 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.sql.SQLException;
 import java.util.Date;
 
-public class RepListener implements Listener {
+public class PlayerJoinLeave implements Listener {
     private final MySQLConnection database;
 
-    public RepListener(MySQLConnection database) {
+    public PlayerJoinLeave(MySQLConnection database) {
         this.database = database;
     }
 
@@ -23,7 +22,7 @@ public class RepListener implements Listener {
         PlayerEntry playerEntry = database.getPlayerByUUID(player.getUniqueId().toString());
 
         if (playerEntry == null) {
-            playerEntry = new PlayerEntry(player.getUniqueId().toString(), player.getName(), 0.0, 0.0, 0, 5.0, 0, new Date(), new Date());
+            playerEntry = new PlayerEntry(player.getUniqueId().toString(), player.getName(), 0.0, 0.0, 0, 5.0, 0.0, 0, new Date(), new Date());
             database.createPlayerEntry(playerEntry);
         }
         return playerEntry;

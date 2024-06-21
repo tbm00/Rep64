@@ -1,4 +1,4 @@
-package dev.tbm00.spigot.rep64.db;
+package dev.tbm00.spigot.rep64.data;
 
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
 import dev.tbm00.spigot.rep64.model.RepEntry;
@@ -11,16 +11,16 @@ import org.bukkit.configuration.file.FileConfiguration;
 public class MySQLConnection {
 
     private Connection connection;
-    FileConfiguration fileConfiguration;
+    private final FileConfiguration fileConfiguration;
 
     public MySQLConnection(FileConfiguration fileConfiguration) {
         this.fileConfiguration = fileConfiguration;
     }
 
     public Connection getConnection() throws SQLException {
-        // If connection already established, return it
+        // If connection already established, close it
         if(connection != null){
-            return connection;
+            connection.close();
         }
 
         String prefix = "jdbc:mysql://";
@@ -43,7 +43,7 @@ public class MySQLConnection {
         Statement statement = getConnection().createStatement();
 
         //Create the tables
-        String playersTable = "CREATE TABLE IF NOT EXISTS rep64_players (uuid VARCHAR(36) PRIMARY KEY, username VARCHAR(16), rep_avg DOUBLE, rep_avg_last DOUBLE, rep_staff_modifier INT, rep_shown DOUBLE, rep_count INT, last_login DATE, last_logout DATE)";
+        String playersTable = "CREATE TABLE IF NOT EXISTS rep64_players (uuid VARCHAR(36) PRIMARY KEY, username VARCHAR(16), rep_avg DOUBLE, rep_avg_last DOUBLE, rep_staff_modifier INT, rep_shown DOUBLE, rep_shown_last DOUBLE, rep_count INT, last_login DATE, last_logout DATE)";
         String repsTable = "CREATE TABLE IF NOT EXISTS rep64_reps (id INT AUTO_INCREMENT PRIMARY KEY, initiator_UUID VARCHAR(36), receiver_UUID VARCHAR(36), rep INT)";
 
         statement.execute(playersTable);
@@ -60,6 +60,7 @@ public class MySQLConnection {
         statement.setDouble(4, player.getRepAverageLast());
         statement.setInt(5, player.getRepStaffModifier());
         statement.setDouble(6, player.getRepShown());
+        statement.setDouble(6, player.getRepShownLast());
         statement.setInt(7, player.getRepCount());
         statement.setDate(8, new Date(player.getLastLogin().getTime()));
         statement.setDate(9, new Date(player.getLastLogout().getTime()));
@@ -76,6 +77,7 @@ public class MySQLConnection {
         statement.setDouble(2, player.getRepAverageLast());
         statement.setInt(3, player.getRepStaffModifier());
         statement.setDouble(4, player.getRepShown());
+        statement.setDouble(4, player.getRepShownLast());
         statement.setInt(5, player.getRepCount());
         statement.setDate(6, new Date(player.getLastLogin().getTime()));
         statement.setDate(7, new Date(player.getLastLogout().getTime()));
@@ -110,6 +112,7 @@ public class MySQLConnection {
                     resultSet.getDouble("rep_avg_last"),
                     resultSet.getInt("rep_staff_modifier"),
                     resultSet.getDouble("rep_shown"),
+                    resultSet.getDouble("rep_shown_shown"),
                     resultSet.getInt("rep_count"),
                     resultSet.getDate("last_login"),
                     resultSet.getDate("last_logout"));
@@ -135,6 +138,7 @@ public class MySQLConnection {
                     resultSet.getDouble("rep_avg_last"),
                     resultSet.getInt("rep_staff_modifier"),
                     resultSet.getDouble("rep_shown"),
+                    resultSet.getDouble("rep_shown_last"),
                     resultSet.getInt("rep_count"),
                     resultSet.getDate("last_login"),
                     resultSet.getDate("last_logout"));
@@ -162,7 +166,7 @@ public class MySQLConnection {
         return repEntry;
     }
 
-    public double calculateRep(String UUID) throws SQLException {
+    public double calculateRepAverage(String UUID) throws SQLException {
         PreparedStatement statement = getConnection()
                 .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?");
         statement.setString(1, UUID);
@@ -179,11 +183,14 @@ public class MySQLConnection {
 
         double sum = 0.0;
         for (double rep : repList) sum += rep;
-        double average = (sum / repList.size());
 
+        return (sum / repList.size());
+    }
+
+    public double calculateRepShown(String UUID) throws SQLException {
         PlayerEntry player = getPlayerByUUID(UUID);
 
-        return average + player.getRepStaffModifier();
+        return calculateRepAverage(UUID) + player.getRepStaffModifier();
     }
 
     public void createRepEntry(String initiatorUUID, String receiverUUID, int rep) throws SQLException {

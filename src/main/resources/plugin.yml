@@ -1,5 +1,17 @@
-main: dev.tbm00.spigot.rep64.Rep64
-author: tbm00
 name: Rep64
 version: ${project.version}
+description: This plugin enables player reputations
+author: tbm00
+main: dev.tbm00.spigot.rep64.Rep64
 api-version: 1.17
+commands:
+  rep:
+    description: root command
+    usage: /rep <player> <#>  
+permissions:
+  rep64.admin:
+    description: ability to use admin commands
+    default: op
+  rep64.set:
+    description: ability to give someone reputation
+    default: true
