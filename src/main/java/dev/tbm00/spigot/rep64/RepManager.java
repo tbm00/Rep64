@@ -305,15 +305,14 @@ public class RepManager {
 
     // saves rep entry to cache(map) and database(SQL)
     public void saveRepEntry(RepEntry repEntry) {
-        // check if rep entry exists in cache(map), if not create one
         boolean isNewEntry = !rep_map.containsKey(repEntry.getInitiatorUUID()) || 
-                          !rep_map.get(repEntry.getInitiatorUUID()).containsKey(repEntry.getReceiverUUID());
-        
+                              !rep_map.get(repEntry.getInitiatorUUID()).containsKey(repEntry.getReceiverUUID());
+    
         if (isNewEntry) {
             // create new rep entry in cache(map)
             rep_map.putIfAbsent(repEntry.getInitiatorUUID(), new HashMap<>());
             rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
-
+    
             // increase rep_count in cache(map)
             String receiverUUID = repEntry.getReceiverUUID();
             if (player_map.containsKey(receiverUUID)) {
@@ -321,40 +320,54 @@ public class RepManager {
                 playerEntry.setRepCount(playerEntry.getRepCount() + 1);
                 player_map.put(receiverUUID, playerEntry);
             }
-        } else { // update exsisting entry in cache(map)
-            rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
-        }
+            // increase rep_count in sql
+            try (PreparedStatement updateStatement = db.getConnection()
+                    .prepareStatement("UPDATE rep64_players SET rep_count = rep_count + 1 WHERE UUID = ?")) {
+                updateStatement.setString(1, receiverUUID);
+                updateStatement.executeUpdate();
+            } 
+            catch (SQLException e) {
+                System.out.println("Exception: Could not save increased rep count to SQL...");
+                e.printStackTrace();
+            }
 
-        // save to sql
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("REPLACE INTO rep64_reps (initiator_UUID, receiver_UUID, rep) VALUES (?, ?, ?)")) {
             // create new rep entry in sql
-            statement.setString(1, repEntry.getInitiatorUUID());
-            statement.setString(2, repEntry.getReceiverUUID());
-            statement.setInt(3, repEntry.getRep());
-            statement.executeUpdate();
+            try (PreparedStatement statement = db.getConnection()
+                    .prepareStatement("INSERT INTO rep64_reps (initiator_UUID, receiver_UUID, rep) VALUES (?, ?, ?)", 
+                    Statement.RETURN_GENERATED_KEYS)) {
+                statement.setString(1, repEntry.getInitiatorUUID());
+                statement.setString(2, repEntry.getReceiverUUID());
+                statement.setInt(3, repEntry.getRep());
+                statement.executeUpdate();
 
-            // retrieve generated id
-            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    repEntry.setId(generatedKeys.getInt(1));
-                    rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
+                // retrieve generated id
+                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        repEntry.setId(generatedKeys.getInt(1));
+                        rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
+                    }
                 }
+            } catch (SQLException e) {
+                System.out.println("Exception: Could not save rep entry to SQL...");
+                e.printStackTrace();
             }
+        } else {
+            // update existing rep entry in cache(map)
+            rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
 
-            if (isNewEntry) {
-                // Increase rep_count in database
-                String receiverUUID = repEntry.getReceiverUUID();
-                PlayerEntry playerEntry = getPlayerEntry(receiverUUID);
-                if (playerEntry != null) {
-                    playerEntry.setRepCount(playerEntry.getRepCount() + 1);
-                    savePlayerEntry(playerEntry);
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Exception: Could not save rep entry...");
+            // update existing rep entry in sql
+            try (PreparedStatement statement = db.getConnection()
+                    .prepareStatement("UPDATE rep64_reps SET rep = ? WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
+                statement.setInt(1, repEntry.getRep());
+                statement.setString(2, repEntry.getInitiatorUUID());
+                statement.setString(3, repEntry.getReceiverUUID());
+                statement.executeUpdate();
+            } catch (SQLException e) {
             e.printStackTrace();
+            }
         }
+        // recalculate the average rep
+        calculateRepAverage(repEntry.getReceiverUUID());
     }
 
     public void deleteRepEntry(String initiatorUUID, String receiverUUID) {
