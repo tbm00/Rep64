@@ -14,6 +14,12 @@ public class RepEntry {
         this.rep = rep;
     }
 
+    public RepEntry(String initiatorUUID, String receiverUUID, int rep) {
+        this.initiatorUUID = initiatorUUID;
+        this.receiverUUID = receiverUUID;
+        this.rep = rep;
+    }
+
     public int getId() {
         return id;
     }

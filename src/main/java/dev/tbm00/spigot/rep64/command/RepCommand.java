@@ -1,6 +1,6 @@
 package dev.tbm00.spigot.rep64.command;
 
-import dev.tbm00.spigot.rep64.data.MySQLConnection;
+import dev.tbm00.spigot.rep64.RepManager;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
 import dev.tbm00.spigot.rep64.model.RepEntry;
 
@@ -14,36 +14,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepCommand implements TabExecutor {
-    private MySQLConnection database;
+    private RepManager repManager;
     private String[] subCommands = new String[]{""};
 
-    public RepCommand(MySQLConnection database) {
-        this.database = database;
+    public RepCommand(RepManager repManager) {
+        this.repManager = repManager;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+        // /rep
         if (args.length == 0) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
                 return true;
             }
             Player initiator = (Player) sender;
-            try {
-                PlayerEntry playerEntry = database.getPlayerByUUID(initiator.getUniqueId().toString());
+            PlayerEntry playerEntry = repManager.getPlayerEntry(initiator.getUniqueId().toString());
+            if (playerEntry != null) {
                 double repShown = playerEntry.getRepShown();
                 initiator.sendMessage(ChatColor.GREEN + "Your reputation: " + repShown);
-            } catch (Exception e) {
+            } else {
                 initiator.sendMessage(ChatColor.RED + "An error occurred while fetching your reputation.");
-                e.printStackTrace();
             }
         }
 
+        // /rep <>
         if (args.length == 1) {
             if ("reload".equals(args[0])) {
                 if (sender.hasPermission("rep64.reload")) {
                     try {
-                        database.getConnection();
+                        repManager.reload();
                         sender.sendMessage(ChatColor.GREEN + "You successfully reloaded the plugin!");
                     } catch (Exception e){
                         System.out.println("Error connecting database when reloading!");
@@ -56,89 +58,71 @@ public class RepCommand implements TabExecutor {
             else {
                 Player initiator = (Player) sender;
                 String targetName = args[0];
-                try { 
-                    if (database.getPlayerByUsername(targetName) == null || targetName == null) {
-                        initiator.sendMessage(ChatColor.RED + "An error occurred while fetching their reputation.");
-                        return true;
-                    } else {
-                        try {
-                            Double targetRepShown = database.getPlayerByUUID(targetName).getRepShown();
-                            initiator.sendMessage(ChatColor.GREEN + targetName + " reputation: " + targetRepShown);
-                        } catch (Exception e) {
-                            initiator.sendMessage(ChatColor.RED + "An exception occurred while fetching their reputation.");
-                            e.printStackTrace();
-                            return true;
-                        }
-                    }
-                } catch (Exception e) {
-                    initiator.sendMessage(ChatColor.RED + "An exception occurred while fetching their reputation.");
-                    e.printStackTrace();
-                    return true;
+                PlayerEntry targetEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
+                if (targetEntry != null) {
+                    double targetRepShown = targetEntry.getRepShown();
+                    initiator.sendMessage(ChatColor.GREEN + targetName + " reputation: " + targetRepShown);
+                } else {
+                    initiator.sendMessage(ChatColor.RED + "An error occurred while fetching their reputation.");
                 }
             }
         }
         
+        // /rep <> <>
         if (args.length == 2) {
-            Player initiator = (Player) sender;
-            String targetName = args[0];
-            int rep;
-            if (!(sender.hasPermission("rep64.set"))) return true;
-
             if (!(sender instanceof Player)) {
                 sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
                 return true;
             }
+            if (!sender.hasPermission("rep64.set")) {
+                sender.sendMessage(ChatColor.RED + "No permission!");
+                return true;
+            }
+
+            Player initiator = (Player) sender;
+            String targetName = args[0];
+            int rep;
 
             try {
                 rep = Integer.parseInt(args[1]);
-                if (!(-1 < rep && rep < 11)) {
+                if (rep < 0 || rep > 10) {
                     sender.sendMessage(ChatColor.RED + "The reputation value must be between 0-10.");
+                    return true;
                 }
-            } catch (Exception e) {
+            } catch (NumberFormatException e) {
                 sender.sendMessage(ChatColor.RED + "The reputation value must be a number.");
                 return true;
             }
 
-            try { 
-                if (database.getPlayerByUsername(targetName) == null || targetName == null) {
-                    initiator.sendMessage(ChatColor.RED + "An error occurred while fetching their data.");
-                    return true;
+            String targetUUID = repManager.getPlayerUUID(targetName);
+            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(targetUUID);
+            if (targetPlayerEntry != null) {
+                try {
+                    // Re-calculate current
+                    repManager.calculateRepAverage(targetPlayerEntry.getPlayerUUID());
+    
+                    RepEntry targetRepEntry = new RepEntry(initiator.getUniqueId().toString(), targetUUID, rep);
+
+                    // Save/create new rep entry in databases (sql and cache)
+                    repManager.saveRepEntry(targetRepEntry);
+
+                    // Save/create new rep entry in databases (sql and cache)
+                    repManager.savePlayerEntry(targetPlayerEntry);
+                    repManager.calculateRepAverage(targetPlayerEntry.getPlayerUUID());
+    
+                    // Message player
+                    sender.sendMessage(ChatColor.YELLOW + targetPlayerEntry.getPlayerUsername() + "'s Rep: " + targetPlayerEntry.getRepShownLast() + " (avg of " + (targetPlayerEntry.getRepCount()-1) + " entries)");
+                    sender.sendMessage(ChatColor.GREEN + "You have given " + targetRepEntry.getReceiverUUID() + " a reputation of " + targetRepEntry.getRep());
+                    sender.sendMessage(ChatColor.GREEN + targetPlayerEntry.getPlayerUsername() + "'s Rep: " + targetPlayerEntry.getRepShown() + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");
+                } catch (Exception e) {
+                    sender.sendMessage(ChatColor.RED + "An error occurred while creating the reputation entry.");
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                initiator.sendMessage(ChatColor.RED + "An exception occurred while fetching their data.");
-                e.printStackTrace();
-                return true;
+            } else {
+                sender.sendMessage(ChatColor.RED + "An error occurred while fetching their data.");
             }
-            
-            try {
-                // get current info
-                PlayerEntry targetEntry = database.getPlayerByUsername(targetName);
-                double currentRepShown = targetEntry.getRepShown();
-                double currentRepAverage = targetEntry.getRepAverage();
-
-                // Update database
-                database.createRepEntry(initiator.getUniqueId().toString(), database.getPlayerByUsername(targetName).getPlayerUUID(), rep);
-                
-                // Calculate new Reps
-                double newRepShown = database.calculateRepShown(database.getPlayerByUsername(targetName).getPlayerUUID());
-                double newRepAverage = database.calculateRepAverage(database.getPlayerByUsername(targetName).getPlayerUUID());
-
-                // Continue updating database
-                targetEntry.setRepCount(targetEntry.getRepCount() + 1);
-                targetEntry.setRepShown(newRepShown);
-                targetEntry.setRepAverage(newRepAverage);
-                targetEntry.setRepShownLast(currentRepShown);
-                targetEntry.setRepAverageLast(currentRepAverage);
-                
-                // Message player
-                sender.sendMessage(ChatColor.GREEN + "You have given " + targetName + " a reputation of " + rep);
-                sender.sendMessage(ChatColor.WHITE + "Average Rep: " + newRepShown + ". Prior Average: " + currentRepShown + ". " + targetEntry.getRepCount() + " Reps.");
-            } catch (Exception e) {
-                sender.sendMessage(ChatColor.RED + "An error occurred while creating the reputation entry.");
-                e.printStackTrace();
-            }
-            return true;
         }
+        
         return true;
     }
 
