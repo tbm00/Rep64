@@ -35,10 +35,10 @@ public class RepCommand implements TabExecutor {
             PlayerEntry playerEntry = repManager.getPlayerEntry(initiator.getUniqueId().toString());
             if (playerEntry != null) {
                 double repShown = playerEntry.getRepShown();
-                initiator.sendMessage(ChatColor.GRAY + "Your reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", repShown) 
+                initiator.sendMessage(prefix + ChatColor.GRAY + "Your reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", repShown) 
                     + ChatColor.DARK_GRAY + " (avg of " + playerEntry.getRepCount() + " entries)");
             } else {
-                initiator.sendMessage(ChatColor.RED + "An error occurred while fetching your reputation!");
+                initiator.sendMessage(prefix + ChatColor.RED + "An error occurred while fetching your reputation!");
             }
         }
 
@@ -63,10 +63,10 @@ public class RepCommand implements TabExecutor {
                 PlayerEntry targetEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
                 if (targetEntry != null) {
                     double targetRepShown = targetEntry.getRepShown();
-                    initiator.sendMessage(ChatColor.GRAY + targetName + " reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetRepShown) 
+                    initiator.sendMessage(prefix + ChatColor.GRAY + targetName + " reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetRepShown) 
                         + ChatColor.DARK_GRAY + " (avg of " + targetEntry.getRepCount() + " entries)");
                 } else {
-                    initiator.sendMessage(ChatColor.RED + "An error occurred while fetching their reputation!");
+                    initiator.sendMessage(prefix + ChatColor.RED + "An error occurred while fetching their reputation!");
                 }
             }
         }
@@ -112,7 +112,6 @@ public class RepCommand implements TabExecutor {
 
                     // save/create new rep entry in databases (sql and cache)
                     repManager.saveRepEntry(targetRepEntry);
-                    repManager.calculateRepAverage(targetPlayerEntry.getPlayerUUID());
                     
                     // message player
                     sender.sendMessage(prefix + ChatColor.GREEN + "You have given " + repManager.getPlayerEntry(targetRepEntry.getReceiverUUID()).getPlayerUsername() 
