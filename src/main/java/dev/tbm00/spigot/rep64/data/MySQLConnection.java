@@ -1,43 +1,44 @@
 package dev.tbm00.spigot.rep64.data;
 
-
-import dev.tbm00.spigot.rep64.Rep64;
 import java.sql.*;
+import org.bukkit.configuration.file.FileConfiguration;
 
 public class MySQLConnection {
 
     private Connection connection;
-    private final Rep64 rep64;
+    private final FileConfiguration fileConfig;
 
-    public MySQLConnection(Rep64 rep64) {
-        this.rep64 = rep64;
+    public MySQLConnection(FileConfiguration fileConfig) {
+        this.fileConfig = fileConfig;
         openConnection();
         initializeDatabase();
     }
 
     public void openConnection() {
         try {
-            String host = rep64.getConfig().getString("database.host");
-            String port = rep64.getConfig().getString("database.port");
-            String database = rep64.getConfig().getString("database.name");
-            String username = rep64.getConfig().getString("database.username");
-            String password = rep64.getConfig().getString("database.password");
-            connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database, username, password);
+            String host = fileConfig.getString("database.host");
+            String port = fileConfig.getString("database.port");
+            String database = fileConfig.getString("database.database");
+            String username = fileConfig.getString("database.username");
+            String password = fileConfig.getString("database.password");
+            String options = fileConfig.getString("database.options");
+            this.connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database + options, username, password);
             System.out.println("Connected to MySQL database!");
         } catch (SQLException e) {
             System.out.println("Exception: Could not connect to the database...");
             e.printStackTrace();
         }
+
     }
 
     public Connection getConnection() {
-        return connection;
+        return this.connection;
     }
 
     public void closeConnection() {
-        if (connection != null) {
+        if (this.connection != null) {
             try {
-                connection.close();
+                this.connection.close();
                 System.out.println("Disconnected from database.");
             } catch (SQLException e) {
                 System.out.println("Exception: Could not close the database connection...");

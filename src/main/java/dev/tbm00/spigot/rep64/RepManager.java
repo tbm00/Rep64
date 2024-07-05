@@ -1,19 +1,17 @@
 package dev.tbm00.spigot.rep64;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
+import dev.tbm00.spigot.rep64.data.MySQLConnection;
+import dev.tbm00.spigot.rep64.model.PlayerEntry;
+import dev.tbm00.spigot.rep64.model.RepEntry;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import dev.tbm00.spigot.rep64.data.MySQLConnection;
-import dev.tbm00.spigot.rep64.model.PlayerEntry;
-import dev.tbm00.spigot.rep64.model.RepEntry;
+import java.util.HashMap;
+import java.util.Map;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+//import org.bukkit.plugin.java.JavaPlugin;
 
 public class RepManager {
 
@@ -21,12 +19,12 @@ public class RepManager {
     private final Map<String, String> user_map; // key = username
     private final Map<String, PlayerEntry> player_map; // key = UUID
     private final Map<String, Map<String, RepEntry>> rep_map; // key1 = initiatorUUID, key2= receiverUUID
-    private final JavaPlugin plugin;
+    //private final JavaPlugin plugin;
     
 
-    public RepManager(MySQLConnection database, JavaPlugin plugin) {
+    public RepManager(MySQLConnection database/* , JavaPlugin plugin*/) {
         this.db = database;
-        this.plugin = plugin;
+        //this.plugin = plugin;
         this.player_map = new HashMap<>();
         this.rep_map = new HashMap<>();
         this.user_map = new HashMap<>();
@@ -34,7 +32,7 @@ public class RepManager {
 
     public void reload() {
         // reload config
-        plugin.reloadConfig();
+        //plugin.reloadConfig();
         
         // reload MySQL connection
         db.closeConnection();

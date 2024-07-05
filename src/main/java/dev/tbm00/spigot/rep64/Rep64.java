@@ -4,6 +4,7 @@ import dev.tbm00.spigot.rep64.data.MySQLConnection;
 import dev.tbm00.spigot.rep64.listener.PlayerJoinLeave;
 import dev.tbm00.spigot.rep64.command.RepCommand;
 
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -23,11 +24,14 @@ public class Rep64 extends JavaPlugin {
 		);
 
         // Load Config
-        saveDefaultConfig();
+        this.saveDefaultConfig();
+        FileConfiguration fileConfig = this.getConfig();
 
         // Connect to MySQL
-        this.mysqlConnection = new MySQLConnection(this);
-        this.repManager = new RepManager(this.mysqlConnection, this);
+        this.mysqlConnection = new MySQLConnection(fileConfig);
+
+        // Connect RepManager
+        this.repManager = new RepManager(this.mysqlConnection/*, this */);
 
         // Register Listener
         getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this.repManager), this);

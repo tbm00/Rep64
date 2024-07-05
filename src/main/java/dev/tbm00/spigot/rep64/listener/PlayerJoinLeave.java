@@ -19,15 +19,12 @@ public class PlayerJoinLeave implements Listener {
 
     public PlayerEntry loadPlayerEntryFromData(Player player) {
         PlayerEntry playerEntry = repManager.getPlayerEntry(player.getUniqueId().toString());
-
         if (playerEntry == null) {
             playerEntry = new PlayerEntry(player.getUniqueId().toString(), player.getName(), 0.0, 0.0, 0, 5.0, 0.0, 0, new Date(), new Date());
             repManager.savePlayerEntry(playerEntry);
-            return playerEntry;
-        } else {
-            System.out.println("Error: Could not retrieve or create player entry...");
-            return null;
+            System.out.println("Could not retrieve player entry... Creating new one!");
         }
+        return playerEntry;
     }
 
     @EventHandler

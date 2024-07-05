@@ -1,7 +1,8 @@
 # MySQL
-host: 'host'
-port: '3306'
-database: 'rep64'
-username: 'user'
-password: 'pw'
-options: '?autoReconnect=true'
+database:
+  host: 'host'
+  port: '3306'
+  database: 'rep64'
+  username: 'user'
+  password: 'pw'
+  options: '?autoReconnect=true'
