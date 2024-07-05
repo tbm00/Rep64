@@ -15,7 +15,7 @@ import java.util.List;
 
 public class RepCommand implements TabExecutor {
     private RepManager repManager;
-    private String[] subCommands = new String[]{""};
+    private String[] subCommands = new String[]{"unset"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
 
     public RepCommand(RepManager repManager) {
@@ -28,7 +28,7 @@ public class RepCommand implements TabExecutor {
         // /rep
         if (args.length == 0) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player.");
+                sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
                 return true;
             }
             Player initiator = (Player) sender;
@@ -38,7 +38,7 @@ public class RepCommand implements TabExecutor {
                 initiator.sendMessage(prefix + ChatColor.GRAY + "Your reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", repShown) 
                     + ChatColor.DARK_GRAY + " (avg of " + playerEntry.getRepCount() + " entries)");
             } else {
-                initiator.sendMessage(prefix + ChatColor.RED + "An error occurred while fetching your reputation!");
+                initiator.sendMessage(prefix + ChatColor.RED + "Could not find your reputation!");
             }
         }
 
@@ -66,7 +66,7 @@ public class RepCommand implements TabExecutor {
                     initiator.sendMessage(prefix + ChatColor.GRAY + targetName + " reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetRepShown) 
                         + ChatColor.DARK_GRAY + " (avg of " + targetEntry.getRepCount() + " entries)");
                 } else {
-                    initiator.sendMessage(prefix + ChatColor.RED + "An error occurred while fetching their reputation!");
+                    initiator.sendMessage(prefix + ChatColor.RED + "Could not find target player's reputation!");
                 }
             }
         }
@@ -96,7 +96,7 @@ public class RepCommand implements TabExecutor {
                     repManager.deleteRepEntry(initiatorUUID, receiverUUID);
                     sender.sendMessage(prefix + ChatColor.GREEN + "You have removed your reputation entry for " + targetName + "!");
                 } else {
-                    sender.sendMessage(prefix + ChatColor.RED + "Error: Player data is not available!");
+                    sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
                 }
             } else {
                 try {
@@ -107,6 +107,7 @@ public class RepCommand implements TabExecutor {
                     }
 
                     // re-calculate current
+                    int priorCount = targetPlayerEntry.getRepCount();
                     repManager.calculateRepAverage(targetPlayerEntry.getPlayerUUID());
                     RepEntry targetRepEntry = new RepEntry(initiator.getUniqueId().toString(), targetUUID, rep);
 
@@ -118,7 +119,7 @@ public class RepCommand implements TabExecutor {
                         + " a reputation of " + targetRepEntry.getRep());
                     sender.sendMessage(prefix + ChatColor.GRAY + targetPlayerEntry.getPlayerUsername() + "'s Rep: " 
                         + ChatColor.RED + String.format("%.1f", targetPlayerEntry.getRepShownLast())
-                        + ChatColor.DARK_GRAY + " (avg of " + (targetPlayerEntry.getRepCount()-1) + " entries)");
+                        + ChatColor.DARK_GRAY + " (avg of " + (priorCount) + " entries)");
                     sender.sendMessage(prefix + ChatColor.GRAY + targetPlayerEntry.getPlayerUsername() + "'s Rep: " 
                         + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetPlayerEntry.getRepShown()) 
                         + ChatColor.DARK_GRAY + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");

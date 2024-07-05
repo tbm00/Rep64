@@ -3,6 +3,7 @@ package dev.tbm00.spigot.rep64;
 import dev.tbm00.spigot.rep64.data.MySQLConnection;
 import dev.tbm00.spigot.rep64.listener.PlayerJoinLeave;
 import dev.tbm00.spigot.rep64.command.RepCommand;
+import dev.tbm00.spigot.rep64.command.RepAdminCommand;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -38,6 +39,7 @@ public class Rep64 extends JavaPlugin {
 
         // Register Commands
         getCommand("rep").setExecutor(new RepCommand(this.repManager));
+        getCommand("repadmin").setExecutor(new RepAdminCommand(this.repManager));
 
     }
 
