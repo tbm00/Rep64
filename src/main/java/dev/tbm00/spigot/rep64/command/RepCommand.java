@@ -16,6 +16,7 @@ import java.util.List;
 public class RepCommand implements TabExecutor {
     private RepManager repManager;
     private String[] subCommands = new String[]{"help"};
+    private String[] subSubCommands = new String[]{"<#>", "?", "unset"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
 
     public RepCommand(RepManager repManager) {
@@ -49,8 +50,8 @@ public class RepCommand implements TabExecutor {
 
         // /rep <>
         if (args.length == 1) {
-            if (args[0] == "help") {
-                sender.sendMessage(ChatColor.DARK_PURPLE + "--- " + ChatColor.LIGHT_PURPLE + "&cRep64 Admin Commands" + ChatColor.DARK_PURPLE + " ---\n"
+            if (args[0].equalsIgnoreCase("help")) {
+                sender.sendMessage(ChatColor.DARK_PURPLE + "--- " + ChatColor.LIGHT_PURPLE + "Rep64 Commands" + ChatColor.DARK_PURPLE + " ---\n"
                     + ChatColor.WHITE + "/rep" + ChatColor.GRAY + " Check your average reputation\n"
                     + ChatColor.WHITE + "/rep help" + ChatColor.GRAY + " Display this command list\n"
                     + ChatColor.WHITE + "/rep <player>" + ChatColor.GRAY + " Check <player>'s' a average reputation\n"
@@ -106,7 +107,7 @@ public class RepCommand implements TabExecutor {
                         return true;
                     }
                     repManager.deleteRepEntry(initiatorUUID, receiverUUID);
-                    sender.sendMessage(prefix + ChatColor.GREEN + "You have removed your reputation entry on " + targetName + "!");
+                    sender.sendMessage(prefix + ChatColor.GREEN + "You have removed your rep entry on " + targetName + "!");
                     return true;
                 } else {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
@@ -123,7 +124,7 @@ public class RepCommand implements TabExecutor {
                         return true;
                     }
                     int targetRep = targetRepEntry.getRep();
-                    sender.sendMessage(prefix + ChatColor.GREEN + "You previously gave " + targetName + "a reputation of " + targetRep + "!");
+                    sender.sendMessage(prefix + ChatColor.GREEN + "You previously gave " + targetName + " a reputation of " + targetRep + "!");
                     return true;
                 } else {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
@@ -168,19 +169,28 @@ public class RepCommand implements TabExecutor {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            for (String subCommand : subCommands) {
-                if (subCommand.startsWith(args[0])) {
-                    list.add(subCommand);
+            list.clear();
+            for (String n : subCommands) {
+                if (n!=null && n.startsWith(args[0])) {
+                    list.add(n);
                 }
             }
             for (String n : repManager.username_map.keySet()) {
-                list.add(n);
+                if (n!=null && n.startsWith(args[0])) {
+                    list.add(n);
+                }
             }
         }
         if (args.length == 2) {
-            list.add("?");
-            list.add("<#>");
-            list.add("unset");
+            list.clear();
+            if ( !args[0].equalsIgnoreCase("help") ) {
+                for (String n : subSubCommands) {
+
+                    if (n!=null && n.startsWith(args[1])) {
+                        list.add(n);
+                    }
+                }
+            }
         }
         return list;
     }
