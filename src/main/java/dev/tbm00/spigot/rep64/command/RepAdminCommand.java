@@ -98,12 +98,12 @@ public class RepAdminCommand implements TabExecutor {
             int amount;
             try {
                 amount = Integer.parseInt(args[2]);
-                if (amount < -10 || amount > 10) {
-                    sender.sendMessage(prefix + ChatColor.RED + "Invalid amount. It must be between -10 and 10.");
+                if (amount <= -10 || amount >= 10) {
+                    sender.sendMessage(prefix + ChatColor.RED + "Invalid amount. It must be between -10 and 10!");
                     return false;
                 }
             } catch (NumberFormatException e) {
-                sender.sendMessage(prefix + ChatColor.RED + "Invalid amount. It must be a number.");
+                sender.sendMessage(prefix + ChatColor.RED + "Invalid amount. It must be an integer!");
                 return false;
             }
 
@@ -115,7 +115,6 @@ public class RepAdminCommand implements TabExecutor {
 
             targetPlayerEntry.setRepStaffModifier(amount);
             repManager.savePlayerEntry(targetPlayerEntry);
-            repManager.calculateRepAverage(targetPlayerEntry.getPlayerUUID());
 
             sender.sendMessage(prefix + ChatColor.GREEN + "Applied rep modifier: " + amount + " to " + targetName);
             sender.sendMessage(prefix + ChatColor.GRAY + targetPlayerEntry.getPlayerUsername() + "'s Rep: " 

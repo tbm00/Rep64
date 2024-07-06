@@ -202,6 +202,7 @@ public class RepManager {
 
     // saves player entry to cache(map) and database(SQL)
     public void savePlayerEntry(PlayerEntry playerEntry) {
+        playerEntry = calculateRepAverage(playerEntry);
         // check if player entry exists in cache(map)
         if (!player_map.containsKey(playerEntry.getPlayerUUID())) {
             // create new player entry in cache(map)
@@ -234,6 +235,10 @@ public class RepManager {
     }
 
     public void deletePlayerEntry(String UUID) {
+        // delete rep entries
+        deleteRepEntriesByInitiator(UUID);
+        deleteRepEntriesByReceiver(UUID);
+
         // remove from local cache(map)
         if (player_map.containsKey(UUID)) {
             player_map.remove(UUID);
@@ -248,13 +253,6 @@ public class RepManager {
             System.out.println("Exception: Could not delete player entry...");
             e.printStackTrace();
         }
-    
-        // delete rep entries
-        deleteRepEntriesByInitiator(UUID);
-        deleteRepEntriesByReceiver(UUID);
-
-        // reload cache
-        loadPlayerCache(getPlayerUsername(UUID));
     }
 
     // returns rep entry from cache(map) first
@@ -305,7 +303,9 @@ public class RepManager {
         return intiatorList;
     }
 
-    public void calculateRepAverage(String UUID) {
+    public PlayerEntry calculateRepAverage(PlayerEntry entry) {
+        String UUID = entry.getPlayerUUID();
+        saveRepCount(UUID);
         try (PreparedStatement statement = db.getConnection()
                 .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?")) {
             statement.setString(1, UUID);
@@ -317,32 +317,31 @@ public class RepManager {
                     repList.add((double) resultSet.getInt("rep"));
                 }
 
-                double average = 5.0;
-                if (!repList.isEmpty()) {
-                    // calculate new rep average
-                    double sum = 0.0;
-                    for (double rep : repList) sum += rep;
-                    average = sum / repList.size();
-                }
-
-                // save prior rep average and shown
-                PlayerEntry entry = getPlayerEntry(UUID);
-                if (entry==null) return;
+                // save prior rep averages
                 double lastRepAvg = entry.getRepAverage();
                 double lastRepShown = entry.getRepShown();
                 entry.setRepAverageLast(lastRepAvg);
                 entry.setRepShownLast(lastRepShown);
 
+                // calculate new average
+                double newAverage = 5.0;
+                if (!repList.isEmpty()) {
+                    // calculate new rep average
+                    double sum = 0.0;
+                    for (double rep : repList) sum += rep;
+                    newAverage = sum / repList.size();
+                }
+
                 // apply staff modifier and save
                 double staffMod = entry.getRepStaffModifier();
-                entry.setRepAverage(average);
-                entry.setRepShown(average + staffMod);
-                savePlayerEntry(entry);
-                saveRepCount(UUID);
+                entry.setRepAverage(newAverage);
+                entry.setRepShown(newAverage + staffMod);
+                return entry;
             }
         } catch (SQLException e) {
             System.out.println("Exception: Could not calculate rep average...");
             e.printStackTrace();
+            return null;
         }
     }
 
@@ -385,8 +384,8 @@ public class RepManager {
 
     // saves rep entry to cache(map) and database(SQL)
     public void saveRepEntry(RepEntry repEntry) {
-        boolean isNewEntry = !rep_map.containsKey(repEntry.getInitiatorUUID()) || 
-                              !rep_map.get(repEntry.getInitiatorUUID()).containsKey(repEntry.getReceiverUUID());
+        boolean isNewEntry = (!rep_map.containsKey(repEntry.getInitiatorUUID()) || 
+                              !rep_map.get(repEntry.getInitiatorUUID()).containsKey(repEntry.getReceiverUUID()));
     
         if (isNewEntry) {
             // create new rep entry in cache(map)
@@ -447,7 +446,7 @@ public class RepManager {
             }
         }
         // recalculate the average rep
-        calculateRepAverage(repEntry.getReceiverUUID());
+        savePlayerEntry(getPlayerEntry(repEntry.getReceiverUUID()));
     }
 
     public void deleteRepEntry(String initiatorUUID, String receiverUUID) {
@@ -472,8 +471,8 @@ public class RepManager {
             e.printStackTrace();
         }
         if (receiverUUID!=null) {
-            saveRepCount(receiverUUID);
-            calculateRepAverage(receiverUUID);
+            savePlayerEntry(getPlayerEntry(receiverUUID));
+            unloadPlayerCache(getPlayerUsername(receiverUUID));
             loadPlayerCache(getPlayerUsername(receiverUUID));
         }
     }
@@ -513,8 +512,8 @@ public class RepManager {
         // re calculate
         for (String receiverUUID : affectedReceiverUUIDs) {
             if (receiverUUID!=null) {
-                saveRepCount(receiverUUID);
-                calculateRepAverage(receiverUUID);
+                savePlayerEntry(getPlayerEntry(receiverUUID));
+                unloadPlayerCache(getPlayerUsername(receiverUUID));
                 loadPlayerCache(getPlayerUsername(receiverUUID));
             }
         }
@@ -537,8 +536,8 @@ public class RepManager {
             e.printStackTrace();
         }
         if (receiverUUID!=null) {
-            saveRepCount(receiverUUID);
-            calculateRepAverage(receiverUUID);
+            savePlayerEntry(getPlayerEntry(receiverUUID));
+            unloadPlayerCache(getPlayerUsername(receiverUUID));
             loadPlayerCache(getPlayerUsername(receiverUUID));
         }
     }

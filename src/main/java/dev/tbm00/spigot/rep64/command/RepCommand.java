@@ -95,12 +95,11 @@ public class RepCommand implements TabExecutor {
             String targetName = args[0];
             String action = args[1];
 
-            String targetUUID = repManager.getPlayerUUID(targetName);
-            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(targetUUID);
+            String receiverUUID = repManager.getPlayerUUID(targetName);
+            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
             if (action.equalsIgnoreCase("unset")) {
                 if (targetPlayerEntry != null) {
                     String initiatorUUID = initiator.getUniqueId().toString();
-                    String receiverUUID = targetPlayerEntry.getPlayerUUID();
                     RepEntry targetRepEntry = repManager.getRepEntry(initiatorUUID, receiverUUID);
                     if (targetRepEntry == null) {
                         sender.sendMessage(prefix + ChatColor.RED + "You have not set a reputation on " + targetName + "!");
@@ -116,8 +115,6 @@ public class RepCommand implements TabExecutor {
             } else if (action.equalsIgnoreCase("?")) {
                 if (targetPlayerEntry != null) {
                     String initiatorUUID = initiator.getUniqueId().toString();
-                    String receiverUUID = targetPlayerEntry.getPlayerUUID();
-
                     RepEntry targetRepEntry = repManager.getRepEntry(initiatorUUID, receiverUUID);
                     if (targetRepEntry == null) {
                         sender.sendMessage(prefix + ChatColor.RED + "You have not set a reputation on " + targetName + "!");
@@ -138,10 +135,14 @@ public class RepCommand implements TabExecutor {
                         return true;
                     }
 
-                    // re-calculate current
+                    // save prior/current
                     int priorCount = targetPlayerEntry.getRepCount();
-                    repManager.calculateRepAverage(targetPlayerEntry.getPlayerUUID());
-                    RepEntry targetRepEntry = new RepEntry(initiator.getUniqueId().toString(), targetUUID, rep);
+                    RepEntry targetRepEntry = repManager.getRepEntry(initiator.getUniqueId().toString(), receiverUUID);
+                    if (targetRepEntry==null) {
+                        targetRepEntry = new RepEntry(initiator.getUniqueId().toString(), receiverUUID, rep);
+                    } else {
+                        targetRepEntry.setRep(rep);
+                    }
 
                     // save/create new rep entry in databases (sql and cache)
                     repManager.saveRepEntry(targetRepEntry);
