@@ -13,6 +13,9 @@ permissions:
   rep64.admin:
     description: ability to use basic rep command
     default: op
+  rep64.set.self:
+    description: ability to give yourself reputation
+    default: op
   rep64.set:
     description: ability to give someone reputation
     default: true

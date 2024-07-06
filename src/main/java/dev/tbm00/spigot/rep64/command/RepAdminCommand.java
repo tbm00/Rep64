@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepAdminCommand implements TabExecutor {
-    private RepManager repManager;
-    private String[] subCommands = new String[]{"mod", "show", "deleterepsby", "deleterepson", "delete", "reload"};
-    private String[] subSubSubCommands = new String[]{"show", "<#>"};
+    private final RepManager repManager;
+    private final String[] subCommands = new String[]{"mod", "show", "deleterepsby", "deleterepson", "delete", "reload"};
+    private final String[] subSubSubCommands = new String[]{"show", "<#>"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
 
     public RepAdminCommand(RepManager repManager) {
@@ -32,13 +32,13 @@ public class RepAdminCommand implements TabExecutor {
         // /repadmin
         if (args.length == 0) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player.");
+                sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
                 return true;
             }
             Player initiator = (Player) sender;
             initiator.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + "Rep64 Admin Commands" + ChatColor.DARK_RED + " ---\n"
                 + ChatColor.WHITE + "/repadmin" + ChatColor.GRAY + " Display this command list\n"
-                + ChatColor.WHITE + "/repadmin mod <player> #" + ChatColor.GRAY + " Give <player> a rep modifier (added to avg)\n"
+                + ChatColor.WHITE + "/repadmin mod <player> #" + ChatColor.GRAY + " Give <player> a rep modifier (added to AVG)\n"
                 + ChatColor.WHITE + "/repadmin show <intiator> <receiver>" + ChatColor.GRAY + " Display a specific RepEntry\n"
                 + ChatColor.WHITE + "/repadmin delete <intiator> <receiver>" + ChatColor.GRAY + " Delete a specific RepEntry\n"
                 + ChatColor.WHITE + "/repadmin deleterepsby <intiator>" + ChatColor.GRAY + " Delete RepEntries created by <intiator>\n"
@@ -72,22 +72,29 @@ public class RepAdminCommand implements TabExecutor {
 
     private boolean handleModCommand(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(prefix + ChatColor.RED + "Usage: /repadmin mod <player> show/<amount>");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin mod <player> show/<amount>");
             return false;
         }
         String targetName = args[1];
 
+
         if (args[2].equalsIgnoreCase("show")) {
-            PlayerEntry targetEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
-            if (targetEntry != null) {
-                sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + targetEntry.getPlayerUsername() + " Rep Info" + ChatColor.DARK_RED + " ---\n"
-                + ChatColor.GRAY + "----- Last AVG: " + ChatColor.WHITE + targetEntry.getRepAverageLast() + ChatColor.GRAY + " ----- AVG: " + ChatColor.WHITE + targetEntry.getRepAverage() + "\n"
-                + ChatColor.GRAY + "Last Shown AVG: " + ChatColor.WHITE + targetEntry.getRepShownLast() + ChatColor.GRAY + " Shown AVG: " + ChatColor.WHITE + targetEntry.getRepShown() + "\n"
-                + ChatColor.GRAY + "Staff Modifier: " + ChatColor.WHITE + targetEntry.getRepStaffModifier() + ChatColor.GRAY + " Rep Count: " + ChatColor.WHITE + targetEntry.getRepCount()+ "\n"
-                + ChatColor.GRAY + "Initiators: " 
+            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
+            if (targetPlayerEntry != null) {
+                sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + targetPlayerEntry.getPlayerUsername() + " Rep Info" + ChatColor.DARK_RED + " ---\n"
+                    + ChatColor.GRAY + " -----Last AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverageLast()) + ChatColor.GRAY + "  -----Current AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverage()) + "\n"
+                    + ChatColor.GRAY + "Last Shown AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepShownLast()) + ChatColor.GRAY +   " Current Shown AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepShown()) + "\n"
+                    + ChatColor.GRAY + "Staff Modifier: " + ChatColor.WHITE + targetPlayerEntry.getRepStaffModifier() + ChatColor.GRAY + " Rep Count: " + ChatColor.WHITE + targetPlayerEntry.getRepCount()+ "\n"
+                    + ChatColor.GRAY + "Initiators (have set score on " + targetPlayerEntry.getPlayerUsername() + "): " 
                 );
-                for (String n : repManager.getRepInitiators(targetEntry.getPlayerUUID())) {
-                    sender.sendMessage(ChatColor.DARK_GRAY + n + ChatColor.GRAY + ", ");
+                for (String n : repManager.getRepInitiators(targetPlayerEntry.getPlayerUUID())) {
+                    int n_score = repManager.getRepEntry(repManager.getPlayerUUID(n), repManager.getPlayerUUID(targetName)).getRep();
+                    sender.sendMessage(ChatColor.GRAY + "  - " + ChatColor.DARK_GRAY + n + ChatColor.GRAY + ": " + n_score);
+                }
+                sender.sendMessage(ChatColor.GRAY + "Receivers (have been scored by " + targetPlayerEntry.getPlayerUsername() + "): ");
+                for (String n : repManager.getRepReceivers(targetPlayerEntry.getPlayerUUID())) {
+                    int n_score = repManager.getRepEntry(repManager.getPlayerUUID(targetName), repManager.getPlayerUUID(n)).getRep();
+                    sender.sendMessage(ChatColor.GRAY + "  - " + ChatColor.DARK_GRAY + n + ChatColor.GRAY + ": " + n_score);
                 }
                 return true;
             } else {
@@ -109,34 +116,33 @@ public class RepAdminCommand implements TabExecutor {
 
             PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
             if (targetPlayerEntry == null) {
-                sender.sendMessage(prefix + ChatColor.RED + "Player not found.");
+                sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
                 return false;
             }
+
 
             targetPlayerEntry.setRepStaffModifier(amount);
             repManager.savePlayerEntry(targetPlayerEntry);
 
-            sender.sendMessage(prefix + ChatColor.GREEN + "Applied rep modifier: " + amount + " to " + targetName);
-            sender.sendMessage(prefix + ChatColor.GRAY + targetPlayerEntry.getPlayerUsername() + "'s Rep: " 
-                            + ChatColor.RED + String.format("%.1f", targetPlayerEntry.getRepShownLast())
-                            + ChatColor.DARK_GRAY + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");
-            sender.sendMessage(prefix + ChatColor.GRAY + targetPlayerEntry.getPlayerUsername() + "'s Rep: " 
-                            + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetPlayerEntry.getRepShown()) 
-                            + ChatColor.DARK_GRAY + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");
+            sender.sendMessage(prefix + ChatColor.GREEN + "Applied staff reputation modifier: " + amount + " to " + targetName);
+            sender.sendMessage( ChatColor.YELLOW 
+                + " -----Last AVG: " + String.format("%.1f", targetPlayerEntry.getRepAverageLast()) + "  -----Current AVG: " + String.format("%.1f", targetPlayerEntry.getRepAverage()) + "\n"
+                + "Last Shown AVG: " + String.format("%.1f", targetPlayerEntry.getRepShownLast())   + " Current Shown AVG: " + String.format("%.1f", targetPlayerEntry.getRepShown())
+            );
             return true; 
         }
     }
 
     private boolean handleShowCommand(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(prefix + ChatColor.RED + "Usage: /repadmin show <initiator> <receiver>");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin show <initiator> <receiver>");
             return false;
         }
         String initiator = args[1];
         String receiver = args[2];
         RepEntry targetRepEntry = repManager.getRepEntry(repManager.getPlayerUUID(initiator), repManager.getPlayerUUID(receiver));
         if (targetRepEntry == null) {
-            sender.sendMessage(prefix + ChatColor.RED + "Reputation entry not found.");
+            sender.sendMessage(prefix + ChatColor.RED + "RepEntry not found.");
             return false;
         }
         sender.sendMessage(prefix + ChatColor.GRAY + initiator + " -> " + receiver + ": " + targetRepEntry.getRep());
@@ -147,47 +153,48 @@ public class RepAdminCommand implements TabExecutor {
         if (args.length == 2) {
             String targetName = args[1];
             repManager.deletePlayerEntry(repManager.getPlayerUUID(targetName));
-            sender.sendMessage(prefix + ChatColor.GREEN + "Player entry should be deleted: " + targetName);
-            sender.sendMessage(prefix + ChatColor.GREEN + "All rep entries created by player should be deleted: " + targetName);
-            sender.sendMessage(prefix + ChatColor.GREEN + "All rep entries created on player should be deleted: " + targetName);
+            sender.sendMessage(prefix + ChatColor.GREEN + "PlayerEntry should be deleted: " + targetName + "\n"
+                + ChatColor.GREEN + "All RepEntries created by player should be deleted: " + targetName + "\n"
+                + ChatColor.GREEN + "All RepEntries created on player should be deleted: " + targetName
+            );
             return true;
         } else if (args.length == 3) {
             String initiator = args[1];
             String receiver = args[2];
             repManager.deleteRepEntry(repManager.getPlayerUUID(initiator), repManager.getPlayerUUID(receiver));
-            sender.sendMessage(prefix + ChatColor.GREEN + "Rep entry should be deleted: " + initiator + " -> " + receiver);
+            sender.sendMessage(prefix + ChatColor.GREEN + "RepEntry should be deleted: " + initiator + " -> " + receiver);
             return true;
         } else {
-            sender.sendMessage(prefix + ChatColor.RED + "Usage: /repadmin delete <player> or /repadmin delete <initiator> <receiver>");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin delete <player> or /repadmin delete <initiator> <receiver>");
             return false;
         }
     }
 
     private boolean handleDeleteRepsByCommand(CommandSender sender, String[] args) {
         if (args.length != 2) {
-            sender.sendMessage(prefix + ChatColor.RED + "Usage: /repadmin deleterepsby <initiator>");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin deleterepsby <initiator>");
             return false;
         }
         String initiator = args[1];
         repManager.deleteRepEntriesByInitiator(repManager.getPlayerUUID(initiator));
-        sender.sendMessage(prefix + ChatColor.GREEN + "All rep entries created by player should be deleted: " + initiator);
+        sender.sendMessage(prefix + ChatColor.GREEN + "All RepEntries created by player should be deleted: " + initiator);
         return true;
     }
 
     private boolean handleDeleteRepsOnCommand(CommandSender sender, String[] args) {
         if (args.length != 2) {
-            sender.sendMessage(prefix + ChatColor.RED + "Usage: /repadmin deleterepson <receiver>");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin deleterepson <receiver>");
             return false;
         }
         String receiver = args[1];
         repManager.deleteRepEntriesByReceiver(repManager.getPlayerUUID(receiver));
-        sender.sendMessage(prefix + ChatColor.GREEN + "All rep entries created on player should be deleted: " + receiver);
+        sender.sendMessage(prefix + ChatColor.GREEN + "All RepEntries created on player should be deleted: " + receiver);
         return true;
     }
 
     private boolean handleReloadCommand(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage(prefix + ChatColor.RED + "Usage: /repadmin reload");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin reload");
             return false;
         }
         try {
