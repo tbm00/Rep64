@@ -2,7 +2,7 @@
 database:
   host: 'host'
   port: '3306'
-  database: 'rep64'
+  database: 'db'
   username: 'user'
-  password: 'pw'
+  password: 'pass'
   options: '?autoReconnect=true'

@@ -15,7 +15,7 @@ import java.util.List;
 
 public class RepCommand implements TabExecutor {
     private RepManager repManager;
-    private String[] subCommands = new String[]{"unset"};
+    private String[] subCommands = new String[]{"help"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
 
     public RepCommand(RepManager repManager) {
@@ -24,9 +24,12 @@ public class RepCommand implements TabExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
         // /rep
         if (args.length == 0) {
+            if (!sender.hasPermission("rep64.show")) {
+                sender.sendMessage(prefix + ChatColor.RED + "No permission!");
+                return true;
+            }
             if (!(sender instanceof Player)) {
                 sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
                 return true;
@@ -37,27 +40,30 @@ public class RepCommand implements TabExecutor {
                 double repShown = playerEntry.getRepShown();
                 initiator.sendMessage(prefix + ChatColor.GRAY + "Your reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", repShown) 
                     + ChatColor.DARK_GRAY + " (avg of " + playerEntry.getRepCount() + " entries)");
+                return true;
             } else {
                 initiator.sendMessage(prefix + ChatColor.RED + "Could not find your reputation!");
+                return true;
             }
         }
 
         // /rep <>
         if (args.length == 1) {
-            if ("reload".equals(args[0])) {
-                if (sender.hasPermission("rep64.reload")) {
-                    try {
-                        repManager.reload();
-                        sender.sendMessage(prefix + ChatColor.GREEN + "You successfully reloaded the plugin!");
-                    } catch (Exception e){
-                        System.out.println("Error connecting database when reloading!");
-                    }
-                }
-                else {
+            if (args[0] == "help") {
+                sender.sendMessage(ChatColor.DARK_PURPLE + "--- " + ChatColor.LIGHT_PURPLE + "&cRep64 Admin Commands" + ChatColor.DARK_PURPLE + " ---\n"
+                    + ChatColor.WHITE + "/rep" + ChatColor.GRAY + " Check your average reputation\n"
+                    + ChatColor.WHITE + "/rep help" + ChatColor.GRAY + " Display this command list\n"
+                    + ChatColor.WHITE + "/rep <player>" + ChatColor.GRAY + " Check <player>'s' a average reputation\n"
+                    + ChatColor.WHITE + "/rep <player> ?" + ChatColor.GRAY + " Check what rep you gave <player>\n"
+                    + ChatColor.WHITE + "/rep <player> <#>" + ChatColor.GRAY + " Give <player> a rep score\n"
+                    + ChatColor.WHITE + "/rep <player> unset" + ChatColor.GRAY + " Delete your rep on <player>\n"
+                );
+                return true;
+            } else {
+                if (!sender.hasPermission("rep64.show.others")) {
                     sender.sendMessage(prefix + ChatColor.RED + "No permission!");
+                    return true;
                 }
-            }
-            else {
                 Player initiator = (Player) sender;
                 String targetName = args[0];
                 PlayerEntry targetEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
@@ -65,8 +71,10 @@ public class RepCommand implements TabExecutor {
                     double targetRepShown = targetEntry.getRepShown();
                     initiator.sendMessage(prefix + ChatColor.GRAY + targetName + " reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetRepShown) 
                         + ChatColor.DARK_GRAY + " (avg of " + targetEntry.getRepCount() + " entries)");
+                    return true;
                 } else {
                     initiator.sendMessage(prefix + ChatColor.RED + "Could not find target player's reputation!");
+                    return true;
                 }
             }
         }
@@ -85,7 +93,6 @@ public class RepCommand implements TabExecutor {
             Player initiator = (Player) sender;
             String targetName = args[0];
             String action = args[1];
-            //int rep;
 
             String targetUUID = repManager.getPlayerUUID(targetName);
             PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(targetUUID);
@@ -93,16 +100,40 @@ public class RepCommand implements TabExecutor {
                 if (targetPlayerEntry != null) {
                     String initiatorUUID = initiator.getUniqueId().toString();
                     String receiverUUID = targetPlayerEntry.getPlayerUUID();
+                    RepEntry targetRepEntry = repManager.getRepEntry(initiatorUUID, receiverUUID);
+                    if (targetRepEntry == null) {
+                        sender.sendMessage(prefix + ChatColor.RED + "You have not set a reputation on " + targetName + "!");
+                        return true;
+                    }
                     repManager.deleteRepEntry(initiatorUUID, receiverUUID);
-                    sender.sendMessage(prefix + ChatColor.GREEN + "You have removed your reputation entry for " + targetName + "!");
+                    sender.sendMessage(prefix + ChatColor.GREEN + "You have removed your reputation entry on " + targetName + "!");
+                    return true;
                 } else {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
+                    return true;
+                }
+            } else if (action.equalsIgnoreCase("?")) {
+                if (targetPlayerEntry != null) {
+                    String initiatorUUID = initiator.getUniqueId().toString();
+                    String receiverUUID = targetPlayerEntry.getPlayerUUID();
+
+                    RepEntry targetRepEntry = repManager.getRepEntry(initiatorUUID, receiverUUID);
+                    if (targetRepEntry == null) {
+                        sender.sendMessage(prefix + ChatColor.RED + "You have not set a reputation on " + targetName + "!");
+                        return true;
+                    }
+                    int targetRep = targetRepEntry.getRep();
+                    sender.sendMessage(prefix + ChatColor.GREEN + "You previously gave " + targetName + "a reputation of " + targetRep + "!");
+                    return true;
+                } else {
+                    sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
+                    return true;
                 }
             } else {
                 try {
                     int rep = Integer.parseInt(args[1]);
                     if (rep < 0 || rep > 10) {
-                        sender.sendMessage(prefix + ChatColor.RED + "The reputation value must be between 0-10 (or 'unset')!");
+                        sender.sendMessage(prefix + ChatColor.RED + "The reputation value must be between 0-10!");
                         return true;
                     }
 
@@ -123,8 +154,9 @@ public class RepCommand implements TabExecutor {
                     sender.sendMessage(prefix + ChatColor.GRAY + targetPlayerEntry.getPlayerUsername() + "'s Rep: " 
                         + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetPlayerEntry.getRepShown()) 
                         + ChatColor.DARK_GRAY + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");
+                    return true;
                 } catch (NumberFormatException e) {
-                    sender.sendMessage(prefix + ChatColor.RED + "The reputation value must be between 0-10 (or 'unset')!");
+                    sender.sendMessage(prefix + ChatColor.RED + "Usage: /rep <player> <?, #, unset>");
                     return true;
                 }
             }
@@ -141,6 +173,14 @@ public class RepCommand implements TabExecutor {
                     list.add(subCommand);
                 }
             }
+            for (String n : repManager.username_map.keySet()) {
+                list.add(n);
+            }
+        }
+        if (args.length == 2) {
+            list.add("?");
+            list.add("<#>");
+            list.add("unset");
         }
         return list;
     }

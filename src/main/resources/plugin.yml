@@ -1,17 +1,24 @@
 name: Rep64
 version: ${project.version}
-description: This plugin enables player reputations
+description: This plugin enables player to give other players a reputation score
 author: tbm00
 main: dev.tbm00.spigot.rep64.Rep64
 api-version: 1.17
 commands:
   rep:
-    description: root command
-    usage: /rep <player> <#>  
+    description: Give and display player reputations
+  repadmin:
+    description: Set reputation modifier + more
 permissions:
   rep64.admin:
-    description: ability to use admin commands
+    description: ability to use basic rep command
     default: op
   rep64.set:
     description: ability to give someone reputation
+    default: true
+  rep64.show:
+    description: ability to view your reputation
+    default: true
+  rep64.show.others:
+    description: ability to view others' reputations
     default: true

@@ -40,7 +40,6 @@ public class Rep64 extends JavaPlugin {
         // Register Commands
         getCommand("rep").setExecutor(new RepCommand(this.repManager));
         getCommand("repadmin").setExecutor(new RepAdminCommand(this.repManager));
-
     }
 
     @Override

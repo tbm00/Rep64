@@ -8,7 +8,10 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 //import org.bukkit.plugin.java.JavaPlugin;
@@ -16,18 +19,17 @@ import org.bukkit.entity.Player;
 public class RepManager {
 
     private MySQLConnection db;
-    private final Map<String, String> user_map; // key = username
+    public Map<String, String> username_map; // key = username
     private final Map<String, PlayerEntry> player_map; // key = UUID
     private final Map<String, Map<String, RepEntry>> rep_map; // key1 = initiatorUUID, key2= receiverUUID
     //private final JavaPlugin plugin;
-    
 
     public RepManager(MySQLConnection database/* , JavaPlugin plugin*/) {
         this.db = database;
         //this.plugin = plugin;
         this.player_map = new HashMap<>();
         this.rep_map = new HashMap<>();
-        this.user_map = new HashMap<>();
+        this.username_map = new HashMap<>();
     }
 
     public void reload() {
@@ -40,7 +42,7 @@ public class RepManager {
 
         // refresh caches with information for online players
         player_map.clear();
-        user_map.clear();
+        username_map.clear();
         rep_map.clear();
         for (Player player : Bukkit.getOnlinePlayers()) {
             loadPlayerCache(player.getName());
@@ -49,7 +51,7 @@ public class RepManager {
 
     public void loadPlayerCache(String username) {
         String UUID = getPlayerUUID(username);
-        user_map.put(username, UUID); // user_map
+        username_map.put(username, UUID); // username_map
 
         // player_map
         PlayerEntry playerEntry = getPlayerEntry(UUID);
@@ -102,7 +104,7 @@ public class RepManager {
 
     public void unloadPlayerCache(String username) {
         String UUID = getPlayerUUID(username);
-        user_map.remove(username); // user_map
+        username_map.remove(username); // username_map
         player_map.remove(UUID); // player_map
 
         List<String> onlinePlayersUUIDs = new ArrayList<>();
@@ -126,8 +128,8 @@ public class RepManager {
     // if not found, returns player name from sql
     // if not found, returns null
     public String getPlayerUUID(String username) {
-        if (user_map.containsKey(username)) {
-            return user_map.get(username); // return UUID from map
+        if (username_map.containsKey(username)) {
+            return username_map.get(username); // return UUID from map
         } else {
             try (PreparedStatement statement = db.getConnection()
                     .prepareStatement("SELECT * FROM rep64_players WHERE username = ?")) {
@@ -187,11 +189,11 @@ public class RepManager {
         if (!player_map.containsKey(playerEntry.getPlayerUUID())) {
             // create new player entry in cache(map)
             player_map.put(playerEntry.getPlayerUUID(), playerEntry);
-            user_map.put(playerEntry.getPlayerUsername(), playerEntry.getPlayerUUID());
+            username_map.put(playerEntry.getPlayerUsername(), playerEntry.getPlayerUUID());
         } else {
             // update existing entry in cache(map)
             player_map.put(playerEntry.getPlayerUUID(), playerEntry);
-            user_map.put(playerEntry.getPlayerUsername(), playerEntry.getPlayerUUID());
+            username_map.put(playerEntry.getPlayerUsername(), playerEntry.getPlayerUUID());
         }
 
         // save to sql
@@ -271,6 +273,46 @@ public class RepManager {
     
             try (ResultSet resultSet = statement.executeQuery()) {
                 List<Double> repList = new ArrayList<>();
+
+                while(resultSet.next()) {
+                    repList.add((double) resultSet.getInt("rep"));
+                }
+
+                double average = 5.0;
+                if (!repList.isEmpty()) {
+                    // calculate new rep average
+                    double sum = 0.0;
+                    for (double rep : repList) sum += rep;
+                    average = sum / repList.size();
+                }
+
+                // save prior rep average and shown
+                PlayerEntry entry = getPlayerEntry(UUID);
+                double lastRepAvg = entry.getRepAverage();
+                double lastRepShown = entry.getRepShown();
+                entry.setRepAverageLast(lastRepAvg);
+                entry.setRepShownLast(lastRepShown);
+
+                // apply staff modifier and save
+                double staffMod = entry.getRepStaffModifier();
+                entry.setRepAverage(average);
+                entry.setRepShown(average + staffMod);
+                savePlayerEntry(entry);
+                saveRepCount(UUID);
+            }
+        } catch (SQLException e) {
+            System.out.println("Exception: Could not calculate rep average...");
+            e.printStackTrace();
+        }
+    }
+
+    public void saveRepCount(String UUID) {
+        try (PreparedStatement statement = db.getConnection()
+                .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?")) {
+            statement.setString(1, UUID);
+    
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<Double> repList = new ArrayList<>();
     
                 while(resultSet.next()) {
                     repList.add((double) resultSet.getInt("rep"));
@@ -278,27 +320,27 @@ public class RepManager {
     
                 if (repList.isEmpty()) return;
                 else {
-                    // calculate new rep average
-                    double sum = 0.0;
-                    for (double rep : repList) sum += rep;
-                    double average = sum / repList.size();
-    
-                    // save prior rep average and shown
-                    PlayerEntry entry = getPlayerEntry(UUID);
-                    double lastRepAvg = entry.getRepAverage();
-                    double lastRepShown = entry.getRepShown();
-                    entry.setRepAverageLast(lastRepAvg);
-                    entry.setRepShownLast(lastRepShown);
-    
-                    // apply staff modifier and save
-                    double staffMod = entry.getRepStaffModifier();
-                    entry.setRepAverage(average);
-                    entry.setRepShown(average + staffMod);
-                    savePlayerEntry(entry);
+                    // calculate new rep count
+                    int newCount = repList.size();
+
+                    // store/save new rep count to cache
+                    if (player_map.containsKey(UUID)) {
+                        PlayerEntry playerEntry = player_map.get(UUID);
+                        playerEntry.setRepCount(newCount);
+                        player_map.put(UUID, playerEntry);
+                    }
+
+                    // store/save new rep count to sql
+                    try (PreparedStatement updateStatement = db.getConnection()
+                            .prepareStatement("UPDATE rep64_players SET rep_count = ? WHERE UUID = ?")) {
+                        updateStatement.setInt(1, newCount);
+                        updateStatement.setString(2, UUID);
+                        updateStatement.executeUpdate();
+                    }
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Exception: Could not calculate rep average...");
+            System.out.println("Exception: Could not save rep count...");
             e.printStackTrace();
         }
     }
@@ -391,12 +433,30 @@ public class RepManager {
             System.out.println("Exception: Could not delete rep entry...");
             e.printStackTrace();
         }
+        saveRepCount(receiverUUID);
+        calculateRepAverage(receiverUUID);
     }
 
     public void deleteRepEntriesByInitiator(String initiatorUUID) {
+        Set<String> affectedReceiverUUIDs = new HashSet<>();
+        
         // remove any entry in cache(map)
         if (rep_map.containsKey(initiatorUUID)) {
             rep_map.remove(initiatorUUID);
+        }
+
+        // get receiver list from SQL
+        try (PreparedStatement selectStatement = db.getConnection()
+            .prepareStatement("SELECT receiver_UUID FROM rep64_reps WHERE initiator_UUID = ?")) {
+            selectStatement.setString(1, initiatorUUID);
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                while (resultSet.next()) {
+                affectedReceiverUUIDs.add(resultSet.getString("receiver_UUID"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Exception: Could not fetch affected receiver_UUIDs...");
+            e.printStackTrace();
         }
 
         // delete from sql
@@ -407,6 +467,12 @@ public class RepManager {
         } catch (SQLException e) {
             System.out.println("Exception: Could not delete rep entries...");
             e.printStackTrace();
+        }
+
+        // re calculate
+        for (String receiverUUID : affectedReceiverUUIDs) {
+            saveRepCount(receiverUUID);
+            calculateRepAverage(receiverUUID);
         }
     }
 
@@ -426,5 +492,7 @@ public class RepManager {
             System.out.println("Exception: Could not delete rep entries...");
             e.printStackTrace();
         }
+        saveRepCount(receiverUUID);
+        calculateRepAverage(receiverUUID);
     }
 }
