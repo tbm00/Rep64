@@ -3,6 +3,7 @@ version: ${project.version}
 description: This plugin enables player to give other players a reputation score
 author: tbm00
 main: dev.tbm00.spigot.rep64.Rep64
+softdepend: [PlaceholderAPI]
 api-version: 1.17
 commands:
   rep:

@@ -30,11 +30,11 @@ public class RepCommand implements TabExecutor {
         if (args.length == 0) {
             if (!sender.hasPermission("rep64.show")) {
                 sender.sendMessage(prefix + ChatColor.RED + "No permission!");
-                return true;
+                return false;
             }
             if (!(sender instanceof Player)) {
                 sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
-                return true;
+                return false;
             }
             Player target = (Player) sender;
             PlayerEntry playerEntry = repManager.getPlayerEntry(target.getUniqueId().toString());
@@ -49,7 +49,7 @@ public class RepCommand implements TabExecutor {
                 playerEntry.setLastLogin(new Date());
                 repManager.savePlayerEntry(playerEntry);
                 repManager.loadPlayerCache(target.getName());
-                return true;
+                return false;
             }
         }
 
@@ -68,7 +68,7 @@ public class RepCommand implements TabExecutor {
             } else {
                 if (!sender.hasPermission("rep64.show.others")) {
                     sender.sendMessage(prefix + ChatColor.RED + "No permission!");
-                    return true;
+                    return false;
                 }
                 Player initiator = (Player) sender;
                 String targetName = args[0];
@@ -80,7 +80,7 @@ public class RepCommand implements TabExecutor {
                     return true;
                 } else {
                     initiator.sendMessage(prefix + ChatColor.RED + "Could not find target player's reputation!");
-                    return true;
+                    return false;
                 }
             }
         }
@@ -89,11 +89,11 @@ public class RepCommand implements TabExecutor {
         if (args.length == 2) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
-                return true;
+                return false;
             }
             if (!sender.hasPermission("rep64.set")) {
                 sender.sendMessage(prefix + ChatColor.RED + "No permission!");
-                return true;
+                return false;
             }
 
             Player initiator = (Player) sender;
@@ -105,7 +105,7 @@ public class RepCommand implements TabExecutor {
             
             if ((!sender.hasPermission("rep64.set.self")) && (initiator.getUniqueId().toString().equals(receiverUUID)))  {
                 sender.sendMessage(prefix + ChatColor.RED + "You cannot set a rep score on yourself!");
-                return true;
+                return false;
             }
             
             PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
@@ -124,7 +124,7 @@ public class RepCommand implements TabExecutor {
                     return true;
                 } else {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
-                    return true;
+                    return false;
                 }
             } else if (action.equalsIgnoreCase("?")) {
                 if (targetPlayerEntry != null) {
@@ -139,14 +139,14 @@ public class RepCommand implements TabExecutor {
                     return true;
                 } else {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
-                    return true;
+                    return false;
                 }
             } else {
                 try {
                     int rep = Integer.parseInt(args[1]);
                     if (rep < 0 || rep > 10) {
                         sender.sendMessage(prefix + ChatColor.RED + "The rep score must be an integer between 0 - 10!");
-                        return true;
+                        return false;
                     }
 
                     // save prior/current
@@ -168,7 +168,7 @@ public class RepCommand implements TabExecutor {
                     return true;
                 } catch (NumberFormatException e) {
                     sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /rep <player> <?, #, unset>");
-                    return true;
+                    return false;
                 }
             }
         }
