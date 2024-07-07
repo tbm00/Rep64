@@ -1,6 +1,17 @@
 # Rep64
 A spigot plugin that enables player reputations.
+
 Created by tbm00 for play.mc64.wtf.
+
+## Plans
+- Finish testing & release the plugin on Spigot.
+- Add SQLite as alternative to MySQL.
+- Add reload config command.
+- Add ability for players to see who set a rep on them (with permission node).
+- Add more placeholders?
+- Create lang.yml file so server admins can modify the plugin's messages?
+- Create a listener that will run commands (configurable in config.yml) if a player's rep average is below a threshold for a certain amount of time, or possibly at a specific time?
+- Create inventory GUI that players can view and set reputations in?
 
 ## Dependencies
 - **Java 17+**: REQUIRED
@@ -38,6 +49,10 @@ Created by tbm00 for play.mc64.wtf.
 - `rep64.admin` Ability to use admin commands.
 - `rep64.set.others` Ability to give yourself a rep score.
 
+## Placeholders
+- `rep64_shown` Returns player's RepShown as a double.
+- `rep64_shown_int` Returns player's RepShown as an integer.
+
 ## Config
 ```
 database:
@@ -59,8 +74,3 @@ repScoring:
   maxModifier: 10
   minModifier: -10
 ```
-
-## Plans
-- Finish testing & release the plugin on Spigot.
-- Move messages' text to a new lang.yml file, so server admins can modify them.
-- Create a listener that will run commands (configurable in config.yml) if a player's rep average is below a threshold for a certain amount of time, or possibly at a specific time.
