@@ -1,14 +1,15 @@
 package dev.tbm00.spigot.rep64.listener;
 
-import dev.tbm00.spigot.rep64.RepManager;
-import dev.tbm00.spigot.rep64.model.PlayerEntry;
+import java.util.Date;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.Date;
+import dev.tbm00.spigot.rep64.RepManager;
+import dev.tbm00.spigot.rep64.model.PlayerEntry;
 
 public class PlayerJoinLeave implements Listener {
     private final RepManager repManager;
@@ -42,7 +43,7 @@ public class PlayerJoinLeave implements Listener {
         PlayerEntry playerEntry = loadPlayerEntryFromData(p);
         playerEntry.setLastLogout(new Date());
         repManager.savePlayerEntry(playerEntry);
-        repManager.unloadPlayerCache(p.getName());
+        //repManager.unloadPlayerCache(p.getName());
     }
 }
 

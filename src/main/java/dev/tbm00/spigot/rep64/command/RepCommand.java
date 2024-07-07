@@ -1,8 +1,8 @@
 package dev.tbm00.spigot.rep64.command;
 
-import dev.tbm00.spigot.rep64.RepManager;
-import dev.tbm00.spigot.rep64.model.PlayerEntry;
-import dev.tbm00.spigot.rep64.model.RepEntry;
+import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -10,9 +10,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Date;
+import dev.tbm00.spigot.rep64.RepManager;
+import dev.tbm00.spigot.rep64.model.PlayerEntry;
+import dev.tbm00.spigot.rep64.model.RepEntry;
 
 public class RepCommand implements TabExecutor {
     private final RepManager repManager;
@@ -118,7 +118,7 @@ public class RepCommand implements TabExecutor {
                         sender.sendMessage(prefix + ChatColor.RED + "You have not set a rep score on " + targetName + "!");
                         return true;
                     }
-                    
+
                     repManager.deleteRepEntry(initiatorUUID, receiverUUID);
 
                     // refresh target player entry

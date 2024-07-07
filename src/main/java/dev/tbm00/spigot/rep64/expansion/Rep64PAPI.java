@@ -1,9 +1,10 @@
 package dev.tbm00.spigot.rep64.expansion;
 
-import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.bukkit.entity.Player;
+
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import dev.tbm00.spigot.rep64.RepManager;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
 

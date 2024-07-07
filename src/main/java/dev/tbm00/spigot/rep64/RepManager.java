@@ -1,19 +1,19 @@
 package dev.tbm00.spigot.rep64;
 
-import dev.tbm00.spigot.rep64.data.MySQLConnection;
-import dev.tbm00.spigot.rep64.model.PlayerEntry;
-import dev.tbm00.spigot.rep64.model.RepEntry;
-
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.sql.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import dev.tbm00.spigot.rep64.data.MySQLConnection;
+import dev.tbm00.spigot.rep64.model.PlayerEntry;
+import dev.tbm00.spigot.rep64.model.RepEntry;
 
 public class RepManager {
 
@@ -34,6 +34,16 @@ public class RepManager {
         db.closeConnection();
         db.openConnection();
 
+        // refresh caches with information for online players
+        player_map.clear();
+        username_map.clear();
+        rep_map.clear();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            loadPlayerCache(player.getName());
+        }
+    }
+
+    public void reloadCache() {
         // refresh caches with information for online players
         player_map.clear();
         username_map.clear();
@@ -505,7 +515,7 @@ public class RepManager {
                     loadPlayerCache(targetPlayerEntry.getPlayerUsername());
                     savePlayerEntry(targetPlayerEntry);
                 } else {
-                    System.out.println("Error: Could not find player entry for UUID when saving");
+                    System.out.println("Error: Could not find player entry for UUID when saving...");
                 }
             } else {
                 System.out.println("Error: Could not find receiverUUID when saving...");
@@ -552,19 +562,19 @@ public class RepManager {
         Set<String> receiverList = getRepReceivers(targetUUID);
         if (receiverList != null && !receiverList.isEmpty()) {
             for (String n : receiverList) {
-                deleteRepEntry(targetUUID, n);
+                deleteRepEntry(targetUUID, getPlayerUUID(n));
             }
         }
         Set<String> initiatorList = getRepInitiators(targetUUID);
         if (initiatorList != null && !initiatorList.isEmpty()) {
             for (String n : initiatorList) {
-                deleteRepEntry(n, targetUUID);
+                deleteRepEntry(getPlayerUUID(n), targetUUID);
             }
         }
 
         // recalculate and save
         PlayerEntry targetPlayerEntry = getPlayerEntry(targetUUID);
-        if (targetPlayerEntry != null) {
+        if (targetPlayerEntry != null && targetUUID != null) {
             unloadPlayerCache(targetPlayerEntry.getPlayerUsername());
             loadPlayerCache(targetPlayerEntry.getPlayerUsername());
             savePlayerEntry(targetPlayerEntry, 0);

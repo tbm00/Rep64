@@ -6,3 +6,8 @@ database:
   username: 'user'
   password: 'pass'
   options: '?autoReconnect=true'
+
+# 20 ticks = 1 second
+autoCacheReloader:
+  enabled: true
+  ticksBetween: 36000

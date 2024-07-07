@@ -1,6 +1,7 @@
 package dev.tbm00.spigot.rep64.data;
 
 import java.sql.*;
+
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class MySQLConnection {

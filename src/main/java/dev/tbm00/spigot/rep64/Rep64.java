@@ -1,14 +1,15 @@
 package dev.tbm00.spigot.rep64;
 
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import dev.tbm00.spigot.rep64.data.CacheManager;
 import dev.tbm00.spigot.rep64.data.MySQLConnection;
 import dev.tbm00.spigot.rep64.listener.PlayerJoinLeave;
 import dev.tbm00.spigot.rep64.command.RepCommand;
 import dev.tbm00.spigot.rep64.command.RepAdminCommand;
 import dev.tbm00.spigot.rep64.expansion.Rep64PAPI;
-
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.java.JavaPlugin;
 
 public class Rep64 extends JavaPlugin {
 
@@ -48,6 +49,9 @@ public class Rep64 extends JavaPlugin {
         } else {
             getLogger().warning("PlaceholderAPI not found!");
         }
+
+        // Register CacheManager
+        new CacheManager(this, this.repManager, fileConfig);
     }
 
     @Override
