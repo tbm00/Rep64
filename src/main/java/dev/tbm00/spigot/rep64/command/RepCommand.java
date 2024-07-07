@@ -68,10 +68,10 @@ public class RepCommand implements TabExecutor {
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("help")) {
                 sender.sendMessage(ChatColor.DARK_PURPLE + "--- " + ChatColor.LIGHT_PURPLE + "Rep64 Commands" + ChatColor.DARK_PURPLE + " ---\n"
-                    + ChatColor.WHITE + "/rep" + ChatColor.GRAY + " Check your average reputation\n"
+                    + ChatColor.WHITE + "/rep" + ChatColor.GRAY + " Display your average reputation\n"
                     + ChatColor.WHITE + "/rep help" + ChatColor.GRAY + " Display this command list\n"
-                    + ChatColor.WHITE + "/rep <player>" + ChatColor.GRAY + " Check <player>'s' average reputation\n"
-                    + ChatColor.WHITE + "/rep <player> ?" + ChatColor.GRAY + " Check what rep score you gave <player>\n"
+                    + ChatColor.WHITE + "/rep <player>" + ChatColor.GRAY + " Display <player>'s average reputation\n"
+                    + ChatColor.WHITE + "/rep <player> ?" + ChatColor.GRAY + " Dislay what rep score you gave <player>\n"
                     + ChatColor.WHITE + "/rep <player> <#>" + ChatColor.GRAY + " Give <player> a rep score\n"
                     + ChatColor.WHITE + "/rep <player> unset" + ChatColor.GRAY + " Delete your rep score on <player>\n"
                 );

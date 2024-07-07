@@ -22,9 +22,9 @@ public class Rep64 extends JavaPlugin {
         // Startup Message
         final PluginDescriptionFile pdf = this.getDescription();
 		log(
-            "------------------------------",
-            pdf.getName() + " " + pdf.getVersion() + " by tbm00",
-            "------------------------------"
+            ChatColor.DARK_PURPLE + "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-",
+            pdf.getName() + " v" + pdf.getVersion() + " created by tbm00",
+            ChatColor.DARK_PURPLE + "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
 		);
 
         // Load Config

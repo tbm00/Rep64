@@ -303,7 +303,7 @@ public class RepManager {
     }
 
     public Set<String> getRepInitiators(String receiverUUID) {
-        Set<String> intiatorList = new HashSet<>();
+        Set<String> initiatorList = new HashSet<>();
 
         // get receiver list from SQL
         try (PreparedStatement selectStatement = db.getConnection()
@@ -311,10 +311,10 @@ public class RepManager {
             selectStatement.setString(1, receiverUUID);
             try (ResultSet resultSet = selectStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    intiatorList.add(getPlayerUsername(resultSet.getString("initiator_UUID")));
+                    initiatorList.add(getPlayerUsername(resultSet.getString("initiator_UUID")));
                 }
             }
-            return intiatorList;
+            return initiatorList;
         } catch (SQLException e) {
             System.out.println("Exception: Could not fetch initiator list!");
             e.printStackTrace();
