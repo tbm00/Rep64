@@ -1,4 +1,3 @@
-# MySQL
 database:
   host: 'host'
   port: '3306'
@@ -7,7 +6,13 @@ database:
   password: 'pass'
   options: '?autoReconnect=true'
 
-# 20 ticks = 1 second
 autoCacheReloader:
   enabled: true
   ticksBetween: 36000
+
+repScoring:
+  defaultRep: 5
+  maxRep: 10
+  minRep: 0
+  maxModifier: 10
+  minModifier: -10

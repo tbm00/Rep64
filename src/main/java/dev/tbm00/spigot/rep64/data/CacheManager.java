@@ -27,11 +27,12 @@ public class CacheManager {
                 try {
                     repManager.reloadCache();
                 } catch (Exception e) {
-                    System.out.println("[auto] Exception: Could not reload cache...");
+                    System.out.println("Exception: autoCacheReloader could not reload cache!");
                     e.printStackTrace();
                 }
                 System.out.println("[auto] Caches reloaded!");
             }
         }.runTaskTimer(plugin, 0L, ticksBetween);
+        System.out.println("Started autoCacheReloader!");
     }
 }

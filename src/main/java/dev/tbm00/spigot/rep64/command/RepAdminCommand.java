@@ -7,6 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import dev.tbm00.spigot.rep64.RepManager;
@@ -18,9 +19,17 @@ public class RepAdminCommand implements TabExecutor {
     private final String[] subCommands = new String[]{"mod", "show", "deleterepsby", "deleterepson", "delete", "reset", "reload"};
     private final String[] subSubSubCommands = new String[]{"show", "<#>"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
+    private final double maxModifier;
+    private final double minModifier;
+    private final double maxModifierInt;
+    private final double minModifierInt;
 
-    public RepAdminCommand(RepManager repManager) {
+    public RepAdminCommand(RepManager repManager, FileConfiguration fileConfig) {
         this.repManager = repManager;
+        this.maxModifier = fileConfig.getInt("repScoring.maxModifier");
+        this.minModifier = fileConfig.getInt("repScoring.minModifier");
+        this.maxModifierInt = fileConfig.getInt("repScoring.maxModifier");
+        this.minModifierInt = fileConfig.getInt("repScoring.minModifier");
     }
 
     @Override
@@ -108,8 +117,8 @@ public class RepAdminCommand implements TabExecutor {
             int amount;
             try {
                 amount = Integer.parseInt(args[2]);
-                if (amount < -10 || amount > 10) {
-                    sender.sendMessage(prefix + ChatColor.RED + "Invalid amount. It must be between -10 and 10!");
+                if (amount < minModifier || amount > maxModifier) {
+                    sender.sendMessage(prefix + ChatColor.RED + "Invalid amount. It must be between " + minModifierInt + " and " + maxModifierInt + "!");
                     return false;
                 }
             } catch (NumberFormatException e) {
@@ -255,6 +264,7 @@ public class RepAdminCommand implements TabExecutor {
                 }
             }
         }
+        if (!sender.hasPermission("rep64.admin")) list.clear();
         return list;
     }
 }

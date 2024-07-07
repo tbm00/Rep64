@@ -9,6 +9,7 @@ import java.util.Set;
 import java.sql.*;
 
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import dev.tbm00.spigot.rep64.data.MySQLConnection;
@@ -21,12 +22,14 @@ public class RepManager {
     public final Map<String, String> username_map; // key = username
     private final Map<String, PlayerEntry> player_map; // key = UUID
     private final Map<String, Map<String, RepEntry>> rep_map; // key1 = initiatorUUID, key2= receiverUUID
+    private final double defaultRep;
 
-    public RepManager(MySQLConnection database) {
+    public RepManager(MySQLConnection database, FileConfiguration fileConfig) {
         this.db = database;
         this.player_map = new HashMap<>();
         this.rep_map = new HashMap<>();
         this.username_map = new HashMap<>();
+        this.defaultRep = fileConfig.getInt("repScoring.defaultRep");
     }
 
     public void reload() {
@@ -56,7 +59,7 @@ public class RepManager {
     public void loadPlayerCache(String username) {
         String UUID = getPlayerUUID(username);
         if (UUID == null) {
-            System.out.println("Error: Could not find UUID for username...");
+            System.out.println("Error: Could not find UUID for username!");
             return;
         }
 
@@ -68,7 +71,7 @@ public class RepManager {
         if (playerEntry != null) {
             player_map.put(UUID, playerEntry);
         } else {
-            System.out.println("Error: Could not find PlayerEntry for UUID...");
+            System.out.println("Error: Could not find PlayerEntry for UUID!");
             return;
         }
 
@@ -90,7 +93,7 @@ public class RepManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Exception: Could not load rep entries from SQL to cache...");
+            System.out.println("Exception: Could not load rep entries from SQL to cache!");
             e.printStackTrace();
         }
     }
@@ -98,7 +101,7 @@ public class RepManager {
     public void unloadPlayerCache(String username) {
         String UUID = getPlayerUUID(username);
         if (UUID == null) {
-            System.out.println("Error: Could not find UUID for username...");
+            System.out.println("Error: Could not find UUID for username!");
             return;
         }
 
@@ -137,11 +140,11 @@ public class RepManager {
                     if (resultSet.next()) return resultSet.getString("uuid");
                 }
             } catch (SQLException e) {
-                System.out.println("Exception: Could not find UUID...");
+                System.out.println("Exception: Could not find UUID!");
                 e.printStackTrace();
                 return null;
             }
-            System.out.println("Error: Could not find UUID...");
+            System.out.println("Error: Could not find UUID!");
             return null;
         }
     }
@@ -154,11 +157,11 @@ public class RepManager {
                 if (resultSet.next()) return resultSet.getString("username");
             }
         } catch (SQLException e) {
-            System.out.println("Exception: Could not find username...");
+            System.out.println("Exception: Could not find username!");
             e.printStackTrace();
             return null;
         }
-        System.out.println("Error: Could not find username...");
+        System.out.println("Error: Could not find username!");
         return null;
     }
 
@@ -189,11 +192,11 @@ public class RepManager {
                     }
                 }
             } catch (SQLException e) {
-                System.out.println("Exception: Could not find player entry...");
+                System.out.println("Exception: Could not find player entry!");
                 e.printStackTrace();
                 return null;
             }
-            System.out.println("Error: Could not find player entry...");
+            System.out.println("Error: Could not find player entry!");
             return null;
         }
     }
@@ -228,7 +231,7 @@ public class RepManager {
             statement.setDate(10, new java.sql.Date(playerEntry.getLastLogout().getTime()));
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Exception: Could not save player entry...");
+            System.out.println("Exception: Could not save player entry!");
             e.printStackTrace();
         }
     }
@@ -264,7 +267,7 @@ public class RepManager {
             statement.setDate(10, new java.sql.Date(playerEntry.getLastLogout().getTime()));
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Exception: Could not save player entry...");
+            System.out.println("Exception: Could not save player entry!");
             e.printStackTrace();
         }
     }
@@ -291,10 +294,10 @@ public class RepManager {
                     return repEntry;
                 }
             } catch (SQLException e) {
-                System.out.println("Exception: Could not find rep entry in SQL...");
+                System.out.println("Exception: Could not find rep entry in SQL!");
                 e.printStackTrace();
             }
-            System.out.println("Error: Could not find rep entry in SQL...");
+            System.out.println("Error: Could not find rep entry in SQL!");
             return null;
         }
     }
@@ -313,7 +316,7 @@ public class RepManager {
             }
             return intiatorList;
         } catch (SQLException e) {
-            System.out.println("Exception: Could not fetch initiator list...");
+            System.out.println("Exception: Could not fetch initiator list!");
             e.printStackTrace();
             return null;
         }
@@ -332,7 +335,7 @@ public class RepManager {
             }
             return receiverList;
         } catch (SQLException e) {
-            System.out.println("Exception: Could not fetch receiver list...");
+            System.out.println("Exception: Could not fetch receiver list!");
             e.printStackTrace();
             return null;
         }
@@ -364,7 +367,7 @@ public class RepManager {
                 }
 
                 // calculate new average
-                double newAverage = 5.0;
+                double newAverage = defaultRep;
                 if (!repList.isEmpty()) {
                     // calculate new rep average
                     double sum = 0.0;
@@ -380,7 +383,7 @@ public class RepManager {
                 return entry;
             }
         } catch (SQLException e) {
-            System.out.println("Exception: Could not calculate rep average...");
+            System.out.println("Exception: Could not calculate rep average!");
             e.printStackTrace();
             return null;
         }
@@ -411,7 +414,7 @@ public class RepManager {
                 updateStatement.setString(1, receiverUUID);
                 updateStatement.executeUpdate();
             } catch (SQLException e) {
-                System.out.println("Exception: Could not save increased rep count to SQL...");
+                System.out.println("Exception: Could not save increased rep count to SQL!");
                 e.printStackTrace();
             }
 
@@ -432,7 +435,7 @@ public class RepManager {
                     }
                 }
             } catch (SQLException e) {
-                System.out.println("Exception: Could not save rep entry to SQL...");
+                System.out.println("Exception: Could not save rep entry to SQL!");
                 e.printStackTrace();
                 return;
             }
@@ -448,7 +451,7 @@ public class RepManager {
                 statement.setString(3, receiverUUID);
                 statement.executeUpdate();
             } catch (SQLException e) {
-                System.out.println("Exception: Could not update rep entry to SQL...");
+                System.out.println("Exception: Could not update rep entry to SQL!");
                 e.printStackTrace();
                 return;
             }
@@ -476,7 +479,7 @@ public class RepManager {
             statement.setString(2, receiverUUID);
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Exception: Could not delete rep entry...");
+            System.out.println("Exception: Could not delete rep entry!");
             e.printStackTrace();
         }
         
@@ -501,7 +504,7 @@ public class RepManager {
             statement.setString(1, initiatorUUID);
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Exception: Could not delete rep entries by initiator...");
+            System.out.println("Exception: Could not delete rep entries by initiator!");
             e.printStackTrace();
             return;
         }
@@ -515,10 +518,10 @@ public class RepManager {
                     loadPlayerCache(targetPlayerEntry.getPlayerUsername());
                     savePlayerEntry(targetPlayerEntry);
                 } else {
-                    System.out.println("Error: Could not find player entry for UUID when saving...");
+                    System.out.println("Error: Could not find player entry for UUID when saving!");
                 }
             } else {
-                System.out.println("Error: Could not find receiverUUID when saving...");
+                System.out.println("Error: Could not find receiverUUID when saving!");
             }
         }
     }
@@ -536,7 +539,7 @@ public class RepManager {
             statement.setString(1, receiverUUID);
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Exception: Could not delete rep entries by receiver...");
+            System.out.println("Exception: Could not delete rep entries by receiver!");
             e.printStackTrace();
             return;
         }
@@ -549,10 +552,10 @@ public class RepManager {
                 loadPlayerCache(getPlayerUsername(receiverUUID));
                 savePlayerEntry(targetPlayerEntry);
             } else {
-                System.out.println("Error: Could not find player entry for UUID when saving...");
+                System.out.println("Error: Could not find player entry for UUID when saving!");
             }
         } else {
-            System.out.println("Error: Could not find receiverUUID when saving...");
+            System.out.println("Error: Could not find receiverUUID when saving!");
         }
     }
 
@@ -579,7 +582,7 @@ public class RepManager {
             loadPlayerCache(targetPlayerEntry.getPlayerUsername());
             savePlayerEntry(targetPlayerEntry, 0);
         } else {
-            System.out.println("Error: Could not find player entry for UUID...");
+            System.out.println("Error: Could not find player entry for UUID!");
         }
     }
 }

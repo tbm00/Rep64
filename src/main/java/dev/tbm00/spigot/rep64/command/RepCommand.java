@@ -8,6 +8,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import dev.tbm00.spigot.rep64.RepManager;
@@ -19,9 +20,19 @@ public class RepCommand implements TabExecutor {
     private final String[] subCommands = new String[]{"help"};
     private final String[] subSubCommands = new String[]{"<#>", "?", "unset"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
+    private final double defaultRep;
+    private final double maxRep;
+    private final double minRep;
+    private final int maxRepInt;
+    private final int minRepInt;
 
-    public RepCommand(RepManager repManager) {
+    public RepCommand(RepManager repManager, FileConfiguration fileConfig) {
         this.repManager = repManager;
+        this.defaultRep = fileConfig.getInt("repScoring.defaultRep");
+        this.maxRep = fileConfig.getInt("repScoring.maxRep");
+        this.minRep = fileConfig.getInt("repScoring.minRep");
+        this.maxRepInt = fileConfig.getInt("repScoring.maxRep");
+        this.minRepInt = fileConfig.getInt("repScoring.minRep");
     }
 
     @Override
@@ -45,7 +56,7 @@ public class RepCommand implements TabExecutor {
                 return true;
             } else {
                 target.sendMessage(prefix + ChatColor.RED + "Could not find your player entry... creating a new one!");
-                playerEntry = new PlayerEntry(target.getUniqueId().toString(), target.getName(), 0.0, 0.0, 0, 5.0, 0.0, 0, new Date(), new Date());
+                playerEntry = new PlayerEntry(target.getUniqueId().toString(), target.getName(), defaultRep, 0.0, 0, defaultRep, 0.0, 0, new Date(), new Date());
                 playerEntry.setLastLogin(new Date());
                 repManager.savePlayerEntry(playerEntry);
                 repManager.loadPlayerCache(target.getName());
@@ -149,8 +160,8 @@ public class RepCommand implements TabExecutor {
             } else {
                 try {
                     int rep = Integer.parseInt(args[1]);
-                    if (rep < 0 || rep > 10) {
-                        sender.sendMessage(prefix + ChatColor.RED + "The rep score must be an integer between 0 - 10!");
+                    if (rep < minRep || rep > maxRep) {
+                        sender.sendMessage(prefix + ChatColor.RED + "The rep score must be an integer between " + minRepInt + " and " + maxRepInt + "!");
                         return false;
                     }
 

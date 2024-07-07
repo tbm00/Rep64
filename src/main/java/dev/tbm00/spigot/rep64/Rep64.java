@@ -1,5 +1,6 @@
 package dev.tbm00.spigot.rep64;
 
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,7 +23,7 @@ public class Rep64 extends JavaPlugin {
         final PluginDescriptionFile pdf = this.getDescription();
 		log(
             "------------------------------",
-            pdf.getName() + " by tbm00",
+            pdf.getName() + " " + pdf.getVersion() + " by tbm00",
             "------------------------------"
 		);
 
@@ -34,18 +35,18 @@ public class Rep64 extends JavaPlugin {
         this.mysqlConnection = new MySQLConnection(fileConfig);
 
         // Connect RepManager
-        this.repManager = new RepManager(this.mysqlConnection);
+        this.repManager = new RepManager(this.mysqlConnection, fileConfig);
 
         // Register Listener
         getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this.repManager), this);
 
         // Register Commands
-        getCommand("rep").setExecutor(new RepCommand(this.repManager));
-        getCommand("repadmin").setExecutor(new RepAdminCommand(this.repManager));
+        getCommand("rep").setExecutor(new RepCommand(this.repManager, fileConfig));
+        getCommand("repadmin").setExecutor(new RepAdminCommand(this.repManager, fileConfig));
 
         // Register Placeholder
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new Rep64PAPI(repManager).register();
+            new Rep64PAPI(repManager, fileConfig).register();
         } else {
             getLogger().warning("PlaceholderAPI not found!");
         }
@@ -69,6 +70,6 @@ public class Rep64 extends JavaPlugin {
 
     private void log(String... strings) {
 		for (String s : strings)
-			getLogger().info(s);
+            getServer().getConsoleSender().sendMessage(ChatColor.LIGHT_PURPLE + s);
 	}
 }
