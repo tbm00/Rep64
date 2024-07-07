@@ -59,3 +59,8 @@ repScoring:
   maxModifier: 10
   minModifier: -10
 ```
+
+## Plans
+- Finish testing & release the plugin on Spigot.
+- Move messages' text to a new lang.yml file, so server admins can modify them.
+- Create a listener that will run commands (configurable in config.yml) if a player's rep average is below a threshold for a certain amount of time, or possibly at a specific time.

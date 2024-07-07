@@ -490,8 +490,16 @@ public class RepManager {
     }
 
     public void deleteRepEntriesByInitiator(String initiatorUUID) {
+        if (initiatorUUID==null) {
+            System.out.println("Error: Could not find initiator UUID when deleting!");
+            return;
+        }
+
         Set<String> receiverList = getRepReceivers(initiatorUUID);
-        if (receiverList == null || receiverList.isEmpty()) return;
+        if (receiverList == null || receiverList.isEmpty()) {
+            System.out.println("Error: Could not find receiver list when deleting!");
+            return;
+        }
                 
         // remove any entry in cache(map) created by initiaor uuid
         if (rep_map.containsKey(initiatorUUID)) {
@@ -510,9 +518,9 @@ public class RepManager {
         }
 
         // recalculate and save
-        for (String receiverUUID : receiverList) {
-            if (receiverUUID!=null) {
-                PlayerEntry targetPlayerEntry = getPlayerEntry(receiverUUID);
+        for (String n : receiverList) {
+            if (n != null) {
+                PlayerEntry targetPlayerEntry = getPlayerEntry(getPlayerUUID(n));
                 if (targetPlayerEntry != null) {
                     unloadPlayerCache(targetPlayerEntry.getPlayerUsername());
                     loadPlayerCache(targetPlayerEntry.getPlayerUsername());
@@ -521,12 +529,17 @@ public class RepManager {
                     System.out.println("Error: Could not find player entry for UUID when saving!");
                 }
             } else {
-                System.out.println("Error: Could not find receiverUUID when saving!");
+                System.out.println("Error: Could not find username when when saving!");
             }
         }
     }
 
     public void deleteRepEntriesByReceiver(String receiverUUID) {
+        if (receiverUUID==null) {
+            System.out.println("Error: Could not find receiver UUID when deleting!");
+            return;
+        }
+
         // iterate thru outer map to find and remove entries with receiverUUID
         rep_map.values().forEach(innerMap -> innerMap.remove(receiverUUID));
 
@@ -545,22 +558,21 @@ public class RepManager {
         }
 
         // recalculate and save
-        if (receiverUUID!=null) {
-            PlayerEntry targetPlayerEntry = getPlayerEntry(receiverUUID);
-            if (targetPlayerEntry != null) {
-                unloadPlayerCache(getPlayerUsername(receiverUUID));
-                loadPlayerCache(getPlayerUsername(receiverUUID));
-                savePlayerEntry(targetPlayerEntry);
-            } else {
-                System.out.println("Error: Could not find player entry for UUID when saving!");
-            }
+        PlayerEntry targetPlayerEntry = getPlayerEntry(receiverUUID);
+        if (targetPlayerEntry != null) {
+            unloadPlayerCache(getPlayerUsername(receiverUUID));
+            loadPlayerCache(getPlayerUsername(receiverUUID));
+            savePlayerEntry(targetPlayerEntry);
         } else {
-            System.out.println("Error: Could not find receiverUUID when saving!");
+            System.out.println("Error: Could not find player entry for UUID when saving!");
         }
     }
 
     public void resetPlayerEntry(String targetUUID) {
-        if (targetUUID==null) return;
+        if (targetUUID==null) {
+            System.out.println("Error: Could not find target UUID when resetting!");
+            return;
+        }
 
         Set<String> receiverList = getRepReceivers(targetUUID);
         if (receiverList != null && !receiverList.isEmpty()) {
@@ -577,12 +589,12 @@ public class RepManager {
 
         // recalculate and save
         PlayerEntry targetPlayerEntry = getPlayerEntry(targetUUID);
-        if (targetPlayerEntry != null && targetUUID != null) {
+        if (targetPlayerEntry != null) {
             unloadPlayerCache(targetPlayerEntry.getPlayerUsername());
             loadPlayerCache(targetPlayerEntry.getPlayerUsername());
             savePlayerEntry(targetPlayerEntry, 0);
         } else {
-            System.out.println("Error: Could not find player entry for UUID!");
+            System.out.println("Error: Could not find player entry for UUID when saving!");
         }
     }
 }
