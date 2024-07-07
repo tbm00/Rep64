@@ -112,12 +112,17 @@ public class RepCommand implements TabExecutor {
             if (action.equalsIgnoreCase("unset")) {
                 if (targetPlayerEntry != null) {
                     String initiatorUUID = initiator.getUniqueId().toString();
+
                     RepEntry targetRepEntry = repManager.getRepEntry(initiatorUUID, receiverUUID);
                     if (targetRepEntry == null) {
                         sender.sendMessage(prefix + ChatColor.RED + "You have not set a rep score on " + targetName + "!");
                         return true;
                     }
+                    
                     repManager.deleteRepEntry(initiatorUUID, receiverUUID);
+
+                    // refresh target player entry
+                    targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
                     sender.sendMessage(prefix + ChatColor.GREEN + "You have removed your rep score on " + targetName + "!");
                     sender.sendMessage(ChatColor.YELLOW + "Last AVG: " + String.format("%.1f", targetPlayerEntry.getRepShownLast())
                                         + ", Current AVG: " + String.format("%.1f", targetPlayerEntry.getRepShown()));
@@ -149,7 +154,13 @@ public class RepCommand implements TabExecutor {
                         return false;
                     }
 
-                    // save prior/current
+                    targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
+                    if (targetPlayerEntry == null) {
+                        sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
+                        return false;
+                    }
+
+                    // save prior/current rep entry
                     RepEntry targetRepEntry = repManager.getRepEntry(initiator.getUniqueId().toString(), receiverUUID);
                     if (targetRepEntry==null) {
                         targetRepEntry = new RepEntry(initiator.getUniqueId().toString(), receiverUUID, rep);
@@ -159,6 +170,9 @@ public class RepCommand implements TabExecutor {
 
                     // save/create new rep entry in databases (sql and cache)
                     repManager.saveRepEntry(targetRepEntry);
+
+                    // refresh targetPlayerEntry
+                    targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
                     
                     // message player
                     sender.sendMessage(prefix + ChatColor.GREEN + "You gave " + repManager.getPlayerEntry(targetRepEntry.getReceiverUUID()).getPlayerUsername() 

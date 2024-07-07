@@ -44,20 +44,29 @@ public class RepManager {
     }
 
     public void loadPlayerCache(String username) {
-        // save to username_map
         String UUID = getPlayerUUID(username);
+        if (UUID == null) {
+            System.out.println("Error: Could not find UUID for username...");
+            return;
+        }
+
+        // save to username_map
         username_map.put(username, UUID);
 
         // save to player_map
         PlayerEntry playerEntry = getPlayerEntry(UUID);
         if (playerEntry != null) {
             player_map.put(UUID, playerEntry);
+        } else {
+            System.out.println("Error: Could not find PlayerEntry for UUID...");
+            return;
         }
 
-        // save to rep_map: receiver
+        // save to rep_map
         try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?")) {
+                .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ? OR initiator_UUID = ?")) {
             statement.setString(1, UUID);
+            statement.setString(2, UUID);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     int id = resultSet.getInt("id");
@@ -65,41 +74,25 @@ public class RepManager {
                     String receiverUUID = resultSet.getString("receiver_UUID");
                     int rep = resultSet.getInt("rep");
                     RepEntry repEntry = new RepEntry(id, initiatorUUID, receiverUUID, rep);
-                    
-                    rep_map.putIfAbsent(initiatorUUID, new HashMap<>());
-                    rep_map.get(initiatorUUID).put(receiverUUID, repEntry);
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Exception: Could not load rep entries set on the player...");
-            e.printStackTrace();
-        }
 
-        // save to rep_map: initiator
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("SELECT * FROM rep64_reps WHERE initiator_UUID = ?")) {
-            statement.setString(1, UUID);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String initiatorUUID = resultSet.getString("initiator_UUID");
-                    String receiverUUID = resultSet.getString("receiver_UUID");
-                    int rep = resultSet.getInt("rep");
-                    RepEntry repEntry = new RepEntry(id, initiatorUUID, receiverUUID, rep);
-                    
                     rep_map.putIfAbsent(initiatorUUID, new HashMap<>());
                     rep_map.get(initiatorUUID).put(receiverUUID, repEntry);
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Exception: Could not load rep entries set by the player...");
+            System.out.println("Exception: Could not load rep entries from SQL to cache...");
             e.printStackTrace();
         }
     }
 
     public void unloadPlayerCache(String username) {
-        // remove from username_map
         String UUID = getPlayerUUID(username);
+        if (UUID == null) {
+            System.out.println("Error: Could not find UUID for username...");
+            return;
+        }
+
+        // remove from username_map
         username_map.remove(username);
 
         // remove from player_map
@@ -198,6 +191,7 @@ public class RepManager {
     // saves player entry to cache(map) and database(SQL)
     public void savePlayerEntry(PlayerEntry playerEntryPassed) {
         PlayerEntry playerEntry = calculateRepAverage(playerEntryPassed);
+        
         // check if player entry exists in cache(map)
         if (!player_map.containsKey(playerEntry.getPlayerUUID())) {
             // create new player entry in cache(map)
@@ -229,46 +223,39 @@ public class RepManager {
         }
     }
 
-    public void resetPlayerEntry(String UUID) {
-        // iterate thru outer map to find and remove entries on UUID
-        rep_map.values().forEach(innerMap -> innerMap.remove(UUID));
+    // saves player entry to cache(map) and database(SQL)
+    public void savePlayerEntry(PlayerEntry playerEntryPassed, int newModifier) {
+        playerEntryPassed.setRepStaffModifier(newModifier);
+        PlayerEntry playerEntry = calculateRepAverage(playerEntryPassed);
 
-        // remove any outer keys that have empty inner maps
-        rep_map.entrySet().removeIf(entry -> entry.getValue().isEmpty());
-
-        // remove any entry in cache(map) created by UUID
-        if (rep_map.containsKey(UUID)) {
-            rep_map.remove(UUID);
+        // check if player entry exists in cache(map)
+        if (!player_map.containsKey(playerEntry.getPlayerUUID())) {
+            // create new player entry in cache(map)
+            player_map.put(playerEntry.getPlayerUUID(), playerEntry);
+            username_map.put(playerEntry.getPlayerUsername(), playerEntry.getPlayerUUID());
+        } else {
+            // update existing entry in cache(map)
+            player_map.put(playerEntry.getPlayerUUID(), playerEntry);
+            username_map.put(playerEntry.getPlayerUsername(), playerEntry.getPlayerUUID());
         }
-        
-        // delete from sql
+
+        // save to sql
         try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("DELETE FROM rep64_reps WHERE receiver_UUID = ?")) {
-            statement.setString(1, UUID);
+                .prepareStatement("REPLACE INTO rep64_players (uuid, username, rep_avg, rep_avg_last, rep_staff_modifier, rep_shown, rep_shown_last, rep_count, last_login, last_logout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            statement.setString(1, playerEntry.getPlayerUUID());
+            statement.setString(2, playerEntry.getPlayerUsername());
+            statement.setDouble(3, playerEntry.getRepAverage());
+            statement.setDouble(4, playerEntry.getRepAverageLast());
+            statement.setInt(5, playerEntry.getRepStaffModifier());
+            statement.setDouble(6, playerEntry.getRepShown());
+            statement.setDouble(7, playerEntry.getRepShownLast());
+            statement.setInt(8, playerEntry.getRepCount());
+            statement.setDate(9, new java.sql.Date(playerEntry.getLastLogin().getTime()));
+            statement.setDate(10, new java.sql.Date(playerEntry.getLastLogout().getTime()));
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Exception: Could not delete rep entries on UUID...");
+            System.out.println("Exception: Could not save player entry...");
             e.printStackTrace();
-            return;
-        }
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("DELETE FROM rep64_reps WHERE initiator_UUID = ?")) {
-            statement.setString(1, UUID);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Exception: Could not delete rep entries by UUID...");
-            e.printStackTrace();
-            return;
-        }
-
-        // recalculate and save
-        if (UUID!=null) {
-            PlayerEntry targetPlayerEntry = getPlayerEntry(UUID);
-            if (targetPlayerEntry != null) {
-                savePlayerEntry(targetPlayerEntry);
-            } else {
-                System.out.println("Error: Could not find player entry for UUID: " + UUID);
-            }
         }
     }
 
@@ -343,7 +330,6 @@ public class RepManager {
 
     public PlayerEntry calculateRepAverage(PlayerEntry entry) {
         String UUID = entry.getPlayerUUID();
-        saveRepCount(UUID);
         try (PreparedStatement statement = db.getConnection()
                 .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?")) {
             statement.setString(1, UUID);
@@ -361,19 +347,26 @@ public class RepManager {
                 entry.setRepAverageLast(lastRepAvg);
                 entry.setRepShownLast(lastRepShown);
 
+                // calcuate new rep count
+                int newCount = 0;
+                if (repList.size() != 0) {
+                    newCount = repList.size();
+                }
+
                 // calculate new average
                 double newAverage = 5.0;
                 if (!repList.isEmpty()) {
                     // calculate new rep average
                     double sum = 0.0;
                     for (double rep : repList) sum += rep;
-                    newAverage = sum / repList.size();
+                    newAverage = sum / newCount;
                 }
-
+                
                 // apply staff modifier and save
                 double staffMod = entry.getRepStaffModifier();
-                entry.setRepAverage(newAverage);
                 entry.setRepShown(newAverage + staffMod);
+                entry.setRepAverage(newAverage);
+                entry.setRepCount(newCount);
                 return entry;
             }
         } catch (SQLException e) {
@@ -383,55 +376,20 @@ public class RepManager {
         }
     }
 
-    public void saveRepCount(String UUID) {
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?")) {
-            statement.setString(1, UUID);
-    
-            try (ResultSet resultSet = statement.executeQuery()) {
-                List<Double> repList = new ArrayList<>();
-    
-                while(resultSet.next()) {
-                    repList.add((double) resultSet.getInt("rep"));
-                }
-    
-                int newCount = 0;
-                if (!repList.isEmpty()) {
-                    newCount = repList.size();
-                }
-                // store/save new rep count to cache
-                if (player_map.containsKey(UUID)) {
-                    PlayerEntry playerEntry = player_map.get(UUID);
-                    playerEntry.setRepCount(newCount);
-                    player_map.put(UUID, playerEntry);
-                }
-
-                // store/save new rep count to sql
-                try (PreparedStatement updateStatement = db.getConnection()
-                        .prepareStatement("UPDATE rep64_players SET rep_count = ? WHERE UUID = ?")) {
-                    updateStatement.setInt(1, newCount);
-                    updateStatement.setString(2, UUID);
-                    updateStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Exception: Could not save rep count...");
-            e.printStackTrace();
-        }
-    }
-
-    // saves rep entry to cache(map) and database(SQL)
+    // saves rep entry to database(SQL) then refreshes cache(maps)
     public void saveRepEntry(RepEntry repEntry) {
-        boolean isNewEntry = (!rep_map.containsKey(repEntry.getInitiatorUUID()) || 
-                              !rep_map.get(repEntry.getInitiatorUUID()).containsKey(repEntry.getReceiverUUID()));
+        String initiatorUUID = repEntry.getInitiatorUUID();
+        String receiverUUID = repEntry.getReceiverUUID();
+
+        boolean isNewEntry = (!rep_map.containsKey(initiatorUUID) || 
+                              !rep_map.get(initiatorUUID).containsKey(receiverUUID));
     
         if (isNewEntry) {
             // create new rep entry in cache(map)
-            rep_map.putIfAbsent(repEntry.getInitiatorUUID(), new HashMap<>());
-            rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
+            rep_map.putIfAbsent(initiatorUUID, new HashMap<>());
+            rep_map.get(initiatorUUID).put(receiverUUID, repEntry);
     
             // increase rep_count in cache(map)
-            String receiverUUID = repEntry.getReceiverUUID();
             if (player_map.containsKey(receiverUUID)) {
                 PlayerEntry playerEntry = player_map.get(receiverUUID);
                 playerEntry.setRepCount(playerEntry.getRepCount() + 1);
@@ -451,8 +409,8 @@ public class RepManager {
             try (PreparedStatement statement = db.getConnection()
                     .prepareStatement("INSERT INTO rep64_reps (initiator_UUID, receiver_UUID, rep) VALUES (?, ?, ?)", 
                     Statement.RETURN_GENERATED_KEYS)) {
-                statement.setString(1, repEntry.getInitiatorUUID());
-                statement.setString(2, repEntry.getReceiverUUID());
+                statement.setString(1, initiatorUUID);
+                statement.setString(2, receiverUUID);
                 statement.setInt(3, repEntry.getRep());
                 statement.executeUpdate();
 
@@ -460,7 +418,7 @@ public class RepManager {
                 try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         repEntry.setId(generatedKeys.getInt(1));
-                        rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
+                        rep_map.get(initiatorUUID).put(receiverUUID, repEntry);
                     }
                 }
             } catch (SQLException e) {
@@ -470,14 +428,14 @@ public class RepManager {
             }
         } else {
             // update existing rep entry in cache(map)
-            rep_map.get(repEntry.getInitiatorUUID()).put(repEntry.getReceiverUUID(), repEntry);
+            rep_map.get(initiatorUUID).put(receiverUUID, repEntry);
 
             // update existing rep entry in sql
             try (PreparedStatement statement = db.getConnection()
                     .prepareStatement("UPDATE rep64_reps SET rep = ? WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
                 statement.setInt(1, repEntry.getRep());
-                statement.setString(2, repEntry.getInitiatorUUID());
-                statement.setString(3, repEntry.getReceiverUUID());
+                statement.setString(2, initiatorUUID);
+                statement.setString(3, receiverUUID);
                 statement.executeUpdate();
             } catch (SQLException e) {
                 System.out.println("Exception: Could not update rep entry to SQL...");
@@ -485,8 +443,9 @@ public class RepManager {
                 return;
             }
         }
+        
         // recalculate and save
-        savePlayerEntry(getPlayerEntry(repEntry.getReceiverUUID()));
+        savePlayerEntry(getPlayerEntry(receiverUUID));
     }
 
     public void deleteRepEntry(String initiatorUUID, String receiverUUID) {
@@ -512,12 +471,15 @@ public class RepManager {
         }
         
         // recalculate and save
+        unloadPlayerCache(getPlayerUsername(receiverUUID));
+        loadPlayerCache(getPlayerUsername(receiverUUID));
         savePlayerEntry(getPlayerEntry(receiverUUID));
     }
 
     public void deleteRepEntriesByInitiator(String initiatorUUID) {
         Set<String> receiverList = getRepReceivers(initiatorUUID);
-        
+        if (receiverList == null || receiverList.isEmpty()) return;
+                
         // remove any entry in cache(map) created by initiaor uuid
         if (rep_map.containsKey(initiatorUUID)) {
             rep_map.remove(initiatorUUID);
@@ -539,12 +501,14 @@ public class RepManager {
             if (receiverUUID!=null) {
                 PlayerEntry targetPlayerEntry = getPlayerEntry(receiverUUID);
                 if (targetPlayerEntry != null) {
+                    unloadPlayerCache(targetPlayerEntry.getPlayerUsername());
+                    loadPlayerCache(targetPlayerEntry.getPlayerUsername());
                     savePlayerEntry(targetPlayerEntry);
                 } else {
                     System.out.println("Error: Could not find player entry for UUID when saving");
                 }
             } else {
-                System.out.println("Error: Could not find receiverUUID when saving");
+                System.out.println("Error: Could not find receiverUUID when saving...");
             }
         }
     }
@@ -571,12 +535,41 @@ public class RepManager {
         if (receiverUUID!=null) {
             PlayerEntry targetPlayerEntry = getPlayerEntry(receiverUUID);
             if (targetPlayerEntry != null) {
+                unloadPlayerCache(getPlayerUsername(receiverUUID));
+                loadPlayerCache(getPlayerUsername(receiverUUID));
                 savePlayerEntry(targetPlayerEntry);
             } else {
-                System.out.println("Error: Could not find player entry for UUID when saving");
+                System.out.println("Error: Could not find player entry for UUID when saving...");
             }
         } else {
-            System.out.println("Error: Could not find receiverUUID when saving");
+            System.out.println("Error: Could not find receiverUUID when saving...");
+        }
+    }
+
+    public void resetPlayerEntry(String targetUUID) {
+        if (targetUUID==null) return;
+
+        Set<String> receiverList = getRepReceivers(targetUUID);
+        if (receiverList != null && !receiverList.isEmpty()) {
+            for (String n : receiverList) {
+                deleteRepEntry(targetUUID, n);
+            }
+        }
+        Set<String> initiatorList = getRepInitiators(targetUUID);
+        if (initiatorList != null && !initiatorList.isEmpty()) {
+            for (String n : initiatorList) {
+                deleteRepEntry(n, targetUUID);
+            }
+        }
+
+        // recalculate and save
+        PlayerEntry targetPlayerEntry = getPlayerEntry(targetUUID);
+        if (targetPlayerEntry != null) {
+            unloadPlayerCache(targetPlayerEntry.getPlayerUsername());
+            loadPlayerCache(targetPlayerEntry.getPlayerUsername());
+            savePlayerEntry(targetPlayerEntry, 0);
+        } else {
+            System.out.println("Error: Could not find player entry for UUID...");
         }
     }
 }

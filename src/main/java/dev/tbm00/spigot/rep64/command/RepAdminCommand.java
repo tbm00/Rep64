@@ -108,7 +108,7 @@ public class RepAdminCommand implements TabExecutor {
             int amount;
             try {
                 amount = Integer.parseInt(args[2]);
-                if (amount <= -10 || amount >= 10) {
+                if (amount < -10 || amount > 10) {
                     sender.sendMessage(prefix + ChatColor.RED + "Invalid amount. It must be between -10 and 10!");
                     return false;
                 }
@@ -117,15 +117,17 @@ public class RepAdminCommand implements TabExecutor {
                 return false;
             }
 
-            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
+            String targetUUID = repManager.getPlayerUUID(targetName);
+            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(targetUUID);
             if (targetPlayerEntry == null) {
                 sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
                 return false;
             }
 
+            repManager.savePlayerEntry(targetPlayerEntry, amount);
 
-            targetPlayerEntry.setRepStaffModifier(amount);
-            repManager.savePlayerEntry(targetPlayerEntry);
+            // refresh targetPlayerEntry
+            targetPlayerEntry = repManager.getPlayerEntry(targetUUID);
 
             sender.sendMessage(prefix + ChatColor.GREEN + "Applied staff reputation modifier: " + amount + " to " + targetName);
             sender.sendMessage( ChatColor.YELLOW 
