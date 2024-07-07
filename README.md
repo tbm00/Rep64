@@ -13,7 +13,7 @@ Created by tbm00 for play.mc64.wtf.
 - `/rep` Display your average reputation
 - `/rep help` Display this command list
 - `/rep <player>` Display player's average reputation
-- `/rep <player> ?` Dislay what rep score you gave player
+- `/rep <player> ?` Display the rep score you gave player
 - `/rep <player> <#>` Give player a rep score
 - `/rep <player> unset` Delete your rep score on player
 

@@ -71,7 +71,7 @@ public class RepCommand implements TabExecutor {
                     + ChatColor.WHITE + "/rep" + ChatColor.GRAY + " Display your average reputation\n"
                     + ChatColor.WHITE + "/rep help" + ChatColor.GRAY + " Display this command list\n"
                     + ChatColor.WHITE + "/rep <player>" + ChatColor.GRAY + " Display <player>'s average reputation\n"
-                    + ChatColor.WHITE + "/rep <player> ?" + ChatColor.GRAY + " Dislay what rep score you gave <player>\n"
+                    + ChatColor.WHITE + "/rep <player> ?" + ChatColor.GRAY + " Display the rep score you gave <player>\n"
                     + ChatColor.WHITE + "/rep <player> <#>" + ChatColor.GRAY + " Give <player> a rep score\n"
                     + ChatColor.WHITE + "/rep <player> unset" + ChatColor.GRAY + " Delete your rep score on <player>\n"
                 );
