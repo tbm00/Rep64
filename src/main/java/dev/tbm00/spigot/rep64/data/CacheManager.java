@@ -1,20 +1,19 @@
 package dev.tbm00.spigot.rep64.data;
 
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import dev.tbm00.spigot.rep64.RepManager;
 
 public class CacheManager {
-    private final JavaPlugin plugin;
+    private final JavaPlugin javaPlugin;
     private final RepManager repManager;
 
-    public CacheManager(JavaPlugin plugin, RepManager repManager, FileConfiguration fileConfig) {
-        this.plugin = plugin;
+    public CacheManager(JavaPlugin javaPlugin, RepManager repManager) {
+        this.javaPlugin = javaPlugin;
         this.repManager = repManager;
-        boolean enabled = fileConfig.getBoolean("autoCacheReloader.enabled");
-        int ticksBetween = fileConfig.getInt("autoCacheReloader.ticksBetween");
+        boolean enabled = javaPlugin.getConfig().getBoolean("autoCacheReloader.enabled");
+        int ticksBetween = javaPlugin.getConfig().getInt("autoCacheReloader.ticksBetween");
         startScheduler(enabled, ticksBetween);
     }
 
@@ -32,7 +31,7 @@ public class CacheManager {
                 }
                 System.out.println("[auto] Caches reloaded!");
             }
-        }.runTaskTimer(plugin, 0L, ticksBetween);
+        }.runTaskTimer(javaPlugin, 0L, ticksBetween);
         System.out.println("Started autoCacheReloader!");
     }
 }

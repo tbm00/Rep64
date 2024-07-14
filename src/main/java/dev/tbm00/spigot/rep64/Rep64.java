@@ -1,7 +1,6 @@
 package dev.tbm00.spigot.rep64;
 
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -29,30 +28,29 @@ public class Rep64 extends JavaPlugin {
 
         // Load Config
         this.saveDefaultConfig();
-        FileConfiguration fileConfig = this.getConfig();
 
         // Connect to MySQL
-        this.mysqlConnection = new MySQLConnection(fileConfig);
+        this.mysqlConnection = new MySQLConnection(this);
 
         // Connect RepManager
-        this.repManager = new RepManager(this.mysqlConnection, fileConfig);
+        this.repManager = new RepManager(this, this.mysqlConnection);
 
         // Register Listener
         getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this.repManager), this);
 
         // Register Commands
-        getCommand("rep").setExecutor(new RepCommand(this.repManager, fileConfig));
-        getCommand("repadmin").setExecutor(new RepAdminCommand(this.repManager, fileConfig));
+        getCommand("rep").setExecutor(new RepCommand(this, this.repManager));
+        getCommand("repadmin").setExecutor(new RepAdminCommand(this, this.repManager));
 
         // Register Placeholder
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new Rep64PAPI(repManager, fileConfig).register();
+            new Rep64PAPI(this, repManager).register();
         } else {
             getLogger().warning("PlaceholderAPI not found!");
         }
 
         // Register CacheManager
-        new CacheManager(this, this.repManager, fileConfig);
+        new CacheManager(this, this.repManager);
     }
 
     @Override

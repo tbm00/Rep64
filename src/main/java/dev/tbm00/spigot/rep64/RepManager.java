@@ -9,31 +9,30 @@ import java.util.Set;
 import java.sql.*;
 
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import dev.tbm00.spigot.rep64.data.MySQLConnection;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
 import dev.tbm00.spigot.rep64.model.RepEntry;
 
 public class RepManager {
-
+    private JavaPlugin javaPlugin;
     private final MySQLConnection db;
     public final Map<String, String> username_map; // key = username
     private final Map<String, PlayerEntry> player_map; // key = UUID
     private final Map<String, Map<String, RepEntry>> rep_map; // key1 = initiatorUUID, key2= receiverUUID
-    private final double defaultRep;
 
-    public RepManager(MySQLConnection database, FileConfiguration fileConfig) {
+    public RepManager(JavaPlugin javaPlugin, MySQLConnection database) {
+        this.javaPlugin = javaPlugin;
         this.db = database;
         this.player_map = new HashMap<>();
         this.rep_map = new HashMap<>();
         this.username_map = new HashMap<>();
-        this.defaultRep = fileConfig.getInt("repScoring.defaultRep");
     }
 
     public void reload() {
-        // reload MySQL connection
+        // reload Connection
         db.closeConnection();
         db.openConnection();
 
@@ -367,7 +366,7 @@ public class RepManager {
                 }
 
                 // calculate new average
-                double newAverage = defaultRep;
+                double newAverage = javaPlugin.getConfig().getInt("repScoring.defaultRep");
                 if (!repList.isEmpty()) {
                     // calculate new rep average
                     double sum = 0.0;

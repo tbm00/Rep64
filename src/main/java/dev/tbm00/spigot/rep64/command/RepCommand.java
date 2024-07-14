@@ -8,8 +8,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import dev.tbm00.spigot.rep64.RepManager;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
@@ -26,13 +26,13 @@ public class RepCommand implements TabExecutor {
     private final int maxRepInt;
     private final int minRepInt;
 
-    public RepCommand(RepManager repManager, FileConfiguration fileConfig) {
+    public RepCommand(JavaPlugin javaPlugin, RepManager repManager) {
         this.repManager = repManager;
-        this.defaultRep = fileConfig.getInt("repScoring.defaultRep");
-        this.maxRep = fileConfig.getInt("repScoring.maxRep");
-        this.minRep = fileConfig.getInt("repScoring.minRep");
-        this.maxRepInt = fileConfig.getInt("repScoring.maxRep");
-        this.minRepInt = fileConfig.getInt("repScoring.minRep");
+        this.defaultRep = javaPlugin.getConfig().getInt("repScoring.defaultRep");
+        this.maxRep = javaPlugin.getConfig().getInt("repScoring.maxRep");
+        this.minRep = javaPlugin.getConfig().getInt("repScoring.minRep");
+        this.maxRepInt = javaPlugin.getConfig().getInt("repScoring.maxRep");
+        this.minRepInt = javaPlugin.getConfig().getInt("repScoring.minRep");
     }
 
     @Override

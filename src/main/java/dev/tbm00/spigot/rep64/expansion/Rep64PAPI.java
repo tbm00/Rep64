@@ -2,8 +2,8 @@ package dev.tbm00.spigot.rep64.expansion;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import dev.tbm00.spigot.rep64.RepManager;
@@ -14,9 +14,9 @@ public class Rep64PAPI extends PlaceholderExpansion {
     private final RepManager repManager;
     private final int defaultRep;
 
-    public Rep64PAPI(RepManager repManager, FileConfiguration fileConfig) {
+    public Rep64PAPI(JavaPlugin javaPlugin, RepManager repManager) {
         this.repManager = repManager;
-        this.defaultRep = fileConfig.getInt("repScoring.defaultRep");
+        this.defaultRep = javaPlugin.getConfig().getInt("repScoring.defaultRep");
     }
 
     @Override

@@ -2,27 +2,27 @@ package dev.tbm00.spigot.rep64.data;
 
 import java.sql.*;
 
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class MySQLConnection {
 
     private Connection connection;
-    private final FileConfiguration fileConfig;
+    private JavaPlugin javaPlugin;
 
-    public MySQLConnection(FileConfiguration fileConfig) {
-        this.fileConfig = fileConfig;
+    public MySQLConnection(JavaPlugin javaPlugin) {
+        this.javaPlugin = javaPlugin;
         openConnection();
         initializeDatabase();
     }
 
     public void openConnection() {
         try {
-            String host = fileConfig.getString("database.host");
-            String port = fileConfig.getString("database.port");
-            String database = fileConfig.getString("database.database");
-            String username = fileConfig.getString("database.username");
-            String password = fileConfig.getString("database.password");
-            String options = fileConfig.getString("database.options");
+            String host = javaPlugin.getConfig().getString("database.host");
+            String port = javaPlugin.getConfig().getString("database.port");
+            String database = javaPlugin.getConfig().getString("database.database");
+            String username = javaPlugin.getConfig().getString("database.username");
+            String password = javaPlugin.getConfig().getString("database.password");
+            String options = javaPlugin.getConfig().getString("database.options");
             this.connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database + options, username, password);
             System.out.println("Connected to MySQL database!");
         } catch (SQLException e) {

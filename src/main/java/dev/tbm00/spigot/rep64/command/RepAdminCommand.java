@@ -7,8 +7,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import dev.tbm00.spigot.rep64.RepManager;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
@@ -24,12 +24,12 @@ public class RepAdminCommand implements TabExecutor {
     private final double maxModifierInt;
     private final double minModifierInt;
 
-    public RepAdminCommand(RepManager repManager, FileConfiguration fileConfig) {
+    public RepAdminCommand(JavaPlugin javaPlugin, RepManager repManager) {
         this.repManager = repManager;
-        this.maxModifier = fileConfig.getInt("repScoring.maxModifier");
-        this.minModifier = fileConfig.getInt("repScoring.minModifier");
-        this.maxModifierInt = fileConfig.getInt("repScoring.maxModifier");
-        this.minModifierInt = fileConfig.getInt("repScoring.minModifier");
+        this.maxModifier = javaPlugin.getConfig().getInt("repScoring.maxModifier");
+        this.minModifier = javaPlugin.getConfig().getInt("repScoring.minModifier");
+        this.maxModifierInt = javaPlugin.getConfig().getInt("repScoring.maxModifier");
+        this.minModifierInt = javaPlugin.getConfig().getInt("repScoring.minModifier");
     }
 
     @Override
