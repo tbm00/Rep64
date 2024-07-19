@@ -132,7 +132,7 @@ public class RepCommand implements TabExecutor {
 
                     repManager.deleteRepEntry(initiatorUUID, receiverUUID);
 
-                    // refresh target player entry
+                    // get fresh target player entry
                     targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
                     sender.sendMessage(prefix + ChatColor.GREEN + "You have removed your rep score on " + targetName + "!");
                     sender.sendMessage(ChatColor.YELLOW + "Last AVG: " + String.format("%.1f", targetPlayerEntry.getRepShownLast())
@@ -171,7 +171,7 @@ public class RepCommand implements TabExecutor {
                         return false;
                     }
 
-                    // save prior/current rep entry
+                    // get prior/current rep entry
                     RepEntry targetRepEntry = repManager.getRepEntry(initiator.getUniqueId().toString(), receiverUUID);
                     if (targetRepEntry==null) {
                         targetRepEntry = new RepEntry(initiator.getUniqueId().toString(), receiverUUID, rep);
@@ -179,13 +179,12 @@ public class RepCommand implements TabExecutor {
                         targetRepEntry.setRep(rep);
                     }
 
-                    // save/create new rep entry in databases (sql and cache)
+                    // calculate and save/create new rep entry in to databases (sql and cache)
                     repManager.saveRepEntry(targetRepEntry);
 
                     // refresh targetPlayerEntry
                     targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
                     
-                    // message player
                     sender.sendMessage(prefix + ChatColor.GREEN + "You gave " + repManager.getPlayerEntry(targetRepEntry.getReceiverUUID()).getPlayerUsername() 
                         + " a rep score of " + targetRepEntry.getRep() + "!");
                     sender.sendMessage(ChatColor.YELLOW + "Last AVG: " + String.format("%.1f", targetPlayerEntry.getRepShownLast())

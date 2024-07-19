@@ -3,15 +3,15 @@ A spigot plugin that enables player reputations.
 
 Created by tbm00 for play.mc64.wtf.
 
-## Plans
+## Potential Plans
 - Finish testing & release the plugin on Spigot.
 - Add SQLite as alternative to MySQL.
 - Add reload config command.
-- Add ability for players to see who set a rep on them (with permission node).
-- Add more placeholders?
-- Create lang.yml file so server admins can modify the plugin's messages?
-- Create a listener that will run commands (configurable in config.yml) if a player's rep average is below a threshold for a certain amount of time, or possibly at a specific time?
-- Create inventory GUI that players can view and set reputations in?
+- Add more placeholders.
+- Add ability for players to see who set a rep on them (with proper permission).
+- Create lang.yml file so server admins can modify the plugin's messages.
+- Create a listener that will run commands (configurable in config.yml) if a player's rep average is below a threshold for a certain amount of time, or possibly at a specific time.
+- Create inventory GUI that players can view and set reputations in.
 
 ## Dependencies
 - **Java 17+**: REQUIRED
@@ -31,13 +31,13 @@ Created by tbm00 for play.mc64.wtf.
 #### Admin Commands
 - `/repadmin` Display this command list
 - `/repadmin mod <player> <#>` Set player's rep modifier (defaults to 0, added to rep avg)
-- `/repadmin mod <player> show` Display player's rep modifier + more
+- `/repadmin show <player>` Display player's rep data
 - `/repadmin show <initiator> <receiver>` Display a specific RepEntry
 - `/repadmin delete <initiator> <receiver>` Delete a specific RepEntry
-- `/repadmin deleterepsby <initiator>` Delete RepEntries created by initiator
-- `/repadmin deleterepson <receiver>` Delete RepEntries created on receiver
+- `/repadmin deleteRepsBy <initiator>` Delete RepEntries created by initiator
+- `/repadmin deleteRepsOn <receiver>` Delete RepEntries created on receiver
 - `/repadmin reset <player>` Reset PlayerEntry & delete all associated RepEntries
-- `/repadmin reload` Reload MySQL database and refresh plugin's caches
+- `/repadmin reloadData` Reload MySQL database and plugin's cache
 
 ## Permissions
 #### Player Permissions
