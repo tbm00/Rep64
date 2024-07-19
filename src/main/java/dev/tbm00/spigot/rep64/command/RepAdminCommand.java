@@ -43,8 +43,7 @@ public class RepAdminCommand implements TabExecutor {
                 sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
                 return false;
             }
-            Player initiator = (Player) sender;
-            initiator.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + "Rep64 Admin Commands" + ChatColor.DARK_RED + " ---\n"
+            sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + "Rep64 Admin Commands" + ChatColor.DARK_RED + " ---\n"
                 + ChatColor.WHITE + "/repadmin" + ChatColor.GRAY + " Display this command list\n"
                 + ChatColor.WHITE + "/repadmin mod <player> <#>" + ChatColor.GRAY + " Set player's rep modifier (defaults to 0, added to rep avg)\n"
                 + ChatColor.WHITE + "/repadmin show <player>" + ChatColor.GRAY + " Display player's rep data\n"
@@ -128,7 +127,7 @@ public class RepAdminCommand implements TabExecutor {
             String targetName = args[1];
             PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
             if (targetPlayerEntry != null) {
-                sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + targetPlayerEntry.getPlayerUsername() + " Rep Info" + ChatColor.DARK_RED + " ---\n"
+                sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + targetPlayerEntry.getPlayerUsername() + " Rep Data" + ChatColor.DARK_RED + " ---\n"
                     + ChatColor.GRAY + " -----Last AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverageLast()) + ChatColor.GRAY + "  -----Current AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverage()) + "\n"
                     + ChatColor.GRAY + "Last Shown AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepShownLast()) + ChatColor.GRAY +   " Current Shown AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepShown()) + "\n"
                     + ChatColor.GRAY + "Staff Modifier: " + ChatColor.WHITE + targetPlayerEntry.getRepStaffModifier() + ChatColor.GRAY + " Rep Count: " + ChatColor.WHITE + targetPlayerEntry.getRepCount()+ "\n"

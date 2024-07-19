@@ -5,10 +5,10 @@ Created by tbm00 for play.mc64.wtf.
 
 ## Potential Plans
 - Finish testing & release the plugin on Spigot.
+- Downgrade Java version.
 - Add SQLite as alternative to MySQL.
 - Add reload config command.
 - Add more placeholders.
-- Add ability for players to see who set a rep on them (with proper permission).
 - Create lang.yml file so server admins can modify the plugin's messages.
 - Create a listener that will run commands (configurable in config.yml) if a player's rep average is below a threshold for a certain amount of time, or possibly at a specific time.
 - Create inventory GUI that players can view and set reputations in.
@@ -27,6 +27,8 @@ Created by tbm00 for play.mc64.wtf.
 - `/rep <player> ?` Display the rep score you gave player
 - `/rep <player> <#>` Give player a rep score
 - `/rep <player> unset` Delete your rep score on player
+- `/rep show` Display your rep lists (trimmed data)
+- `/rep show <player>` Display player's rep lists (trimmed data)
 
 #### Admin Commands
 - `/repadmin` Display this command list
@@ -41,13 +43,15 @@ Created by tbm00 for play.mc64.wtf.
 
 ## Permissions
 #### Player Permissions
-- `rep64.show` Ability to view your average reputation.
-- `rep64.show.others` Ability to view others' average reputation.
-- `rep64.set` Ability to give someone a rep score.
+- `rep64.show` Ability to view your average reputation *(default: everyone)*.
+- `rep64.show.others` Ability to view others' average reputation *(default: everyone)*.
+- `rep64.set` Ability to give others a rep score *(default: everyone)*.
+- `rep64.set.others` Ability to give yourself a rep score *(default: op)*. 
+- `rep64.list` Ability to view your rep lists (trimmed data) *(default: op)*.
+- `rep64.list.others` Ability to view others' rep lists (trimmed data) *(default: op)*.
 
 #### Admin Permissions
-- `rep64.admin` Ability to use admin commands.
-- `rep64.set.others` Ability to give yourself a rep score.
+- `rep64.admin` Ability to use admin commands *(default: op)*.
 
 ## Placeholders
 - `rep64_shown` Returns player's RepShown as a double.

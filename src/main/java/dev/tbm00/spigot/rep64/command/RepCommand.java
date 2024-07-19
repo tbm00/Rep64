@@ -37,71 +37,68 @@ public class RepCommand implements TabExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
+            return false;
+        }
+
         // /rep
         if (args.length == 0) {
             if (!sender.hasPermission("rep64.show")) {
                 sender.sendMessage(prefix + ChatColor.RED + "No permission!");
                 return false;
             }
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
-                return false;
-            }
-            Player target = (Player) sender;
-            PlayerEntry playerEntry = repManager.getPlayerEntry(target.getUniqueId().toString());
-            if (playerEntry != null) {
-                double repShown = playerEntry.getRepShown();
-                target.sendMessage(prefix + ChatColor.GRAY + "Your Reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", repShown) 
-                    + ChatColor.DARK_GRAY + " (avg of " + playerEntry.getRepCount() + " entries)");
+            
+            Player targetPlayer = (Player) sender;
+            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(targetPlayer.getUniqueId().toString());
+            if (targetPlayerEntry != null) {
+                double repShown = targetPlayerEntry.getRepShown();
+                targetPlayer.sendMessage(prefix + ChatColor.GRAY + "Your Reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", repShown) 
+                    + ChatColor.DARK_GRAY + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");
                 return true;
             } else {
-                target.sendMessage(prefix + ChatColor.RED + "Could not find your player entry... creating a new one!");
-                playerEntry = new PlayerEntry(target.getUniqueId().toString(), target.getName(), defaultRep, 0.0, 0, defaultRep, 0.0, 0, new Date(), new Date());
-                playerEntry.setLastLogin(new Date());
-                repManager.savePlayerEntry(playerEntry);
-                repManager.loadPlayerCache(target.getName());
+                targetPlayer.sendMessage(prefix + ChatColor.RED + "Could not find your player entry... creating a new one!");
+                targetPlayerEntry = new PlayerEntry(targetPlayer.getUniqueId().toString(), targetPlayer.getName(), defaultRep, 0.0, 0, defaultRep, 0.0, 0, new Date(), new Date());
+                targetPlayerEntry.setLastLogin(new Date());
+                repManager.savePlayerEntry(targetPlayerEntry);
+                repManager.loadPlayerCache(targetPlayer.getName());
                 return false;
             }
         }
 
-        // /rep <>
+        String subCommand = args[0].toLowerCase();
+
+        switch (subCommand) {
+            case "help":
+                return handleHelpCommand(sender, args);
+            case "list":
+                return handleListCommand(sender, args);
+            default:
+        }
+
+        // /rep <player>
         if (args.length == 1) {
-            if (args[0].equalsIgnoreCase("help")) {
-                sender.sendMessage(ChatColor.DARK_PURPLE + "--- " + ChatColor.LIGHT_PURPLE + "Rep64 Commands" + ChatColor.DARK_PURPLE + " ---\n"
-                    + ChatColor.WHITE + "/rep" + ChatColor.GRAY + " Display your average reputation\n"
-                    + ChatColor.WHITE + "/rep help" + ChatColor.GRAY + " Display this command list\n"
-                    + ChatColor.WHITE + "/rep <player>" + ChatColor.GRAY + " Display <player>'s average reputation\n"
-                    + ChatColor.WHITE + "/rep <player> ?" + ChatColor.GRAY + " Display the rep score you gave <player>\n"
-                    + ChatColor.WHITE + "/rep <player> <#>" + ChatColor.GRAY + " Give <player> a rep score\n"
-                    + ChatColor.WHITE + "/rep <player> unset" + ChatColor.GRAY + " Delete your rep score on <player>\n"
-                );
+            if (!sender.hasPermission("rep64.show.others")) {
+                sender.sendMessage(prefix + ChatColor.RED + "No permission!");
+                return false;
+            }
+
+            Player player = (Player) sender;
+            String targetName = args[0];
+            PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
+            if (targetPlayerEntry != null) {
+                double targetRepShown = targetPlayerEntry.getRepShown();
+                player.sendMessage(prefix + ChatColor.GRAY + targetName + "'s Reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetRepShown) 
+                    + ChatColor.DARK_GRAY + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");
                 return true;
             } else {
-                if (!sender.hasPermission("rep64.show.others")) {
-                    sender.sendMessage(prefix + ChatColor.RED + "No permission!");
-                    return false;
-                }
-                Player initiator = (Player) sender;
-                String targetName = args[0];
-                PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
-                if (targetPlayerEntry != null) {
-                    double targetRepShown = targetPlayerEntry.getRepShown();
-                    initiator.sendMessage(prefix + ChatColor.GRAY + targetName + "'s Reputation: " + ChatColor.LIGHT_PURPLE + String.format("%.1f", targetRepShown) 
-                        + ChatColor.DARK_GRAY + " (avg of " + targetPlayerEntry.getRepCount() + " entries)");
-                    return true;
-                } else {
-                    initiator.sendMessage(prefix + ChatColor.RED + "Could not find target player's reputation!");
-                    return false;
-                }
+                player.sendMessage(prefix + ChatColor.RED + "Could not find target player's reputation!");
+                return false;
             }
         }
         
-        // /rep <> <>
+        // /rep <player> <#>/unset/?
         if (args.length == 2) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
-                return false;
-            }
             if (!sender.hasPermission("rep64.set")) {
                 sender.sendMessage(prefix + ChatColor.RED + "No permission!");
                 return false;
@@ -119,6 +116,8 @@ public class RepCommand implements TabExecutor {
                 return false;
             }
             
+
+            // /rep <player> unset
             PlayerEntry targetPlayerEntry = repManager.getPlayerEntry(receiverUUID);
             if (action.equalsIgnoreCase("unset")) {
                 if (targetPlayerEntry != null) {
@@ -142,7 +141,10 @@ public class RepCommand implements TabExecutor {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
                     return false;
                 }
-            } else if (action.equalsIgnoreCase("?")) {
+            } 
+
+            // /rep <player> ?
+            else if (action.equalsIgnoreCase("?")) {
                 if (targetPlayerEntry != null) {
                     String initiatorUUID = initiator.getUniqueId().toString();
                     RepEntry targetRepEntry = repManager.getRepEntry(initiatorUUID, receiverUUID);
@@ -157,7 +159,10 @@ public class RepCommand implements TabExecutor {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not find target player!");
                     return false;
                 }
-            } else {
+            } 
+            
+            // /rep <player> <#>
+            else {
                 try {
                     int rep = Integer.parseInt(args[1]);
                     if (rep < minRep || rep > maxRep) {
@@ -199,6 +204,89 @@ public class RepCommand implements TabExecutor {
         return true;
     }
 
+    private boolean handleHelpCommand(CommandSender sender, String[] args) {
+        sender.sendMessage(ChatColor.DARK_PURPLE + "--- " + ChatColor.LIGHT_PURPLE + "Rep64 Commands" + ChatColor.DARK_PURPLE + " ---\n"
+        + ChatColor.WHITE + "/rep" + ChatColor.GRAY + " Display your average reputation\n"
+        + ChatColor.WHITE + "/rep help" + ChatColor.GRAY + " Display this command list\n"
+        + ChatColor.WHITE + "/rep <player>" + ChatColor.GRAY + " Display <player>'s average reputation\n"
+        + ChatColor.WHITE + "/rep <player> ?" + ChatColor.GRAY + " Display the rep score you gave <player>\n"
+        + ChatColor.WHITE + "/rep <player> <#>" + ChatColor.GRAY + " Give <player> a rep score\n"
+        + ChatColor.WHITE + "/rep <player> unset" + ChatColor.GRAY + " Delete your rep score on <player>"
+        );
+        if (sender.hasPermission("rep64.list")) {
+            sender.sendMessage(ChatColor.WHITE + "/rep list" + ChatColor.GRAY + " Display your rep lists");
+        }
+        if (sender.hasPermission("rep64.list.others")) {
+            sender.sendMessage(ChatColor.WHITE + "/rep list <player>" + ChatColor.GRAY + " Display player's rep lists");
+        }
+        return true;
+    }
+
+    private boolean handleListCommand(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("rep64.list")) {
+            sender.sendMessage(prefix + ChatColor.RED + "No permission!");
+            return false;
+        }
+        
+        if (args.length != 1 && args.length != 2) {
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage 1: /rep show");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage 2: /rep show <player>");
+            return false;
+        }
+
+        String targetName = null;
+        PlayerEntry targetPlayerEntry = null;
+
+        // /rep show
+        if (args.length == 1) {
+            Player targetPlayer = (Player) sender;
+            targetPlayerEntry = repManager.getPlayerEntry(targetPlayer.getUniqueId().toString());
+            if (targetPlayerEntry == null) {
+                sender.sendMessage(prefix + ChatColor.RED + "Could not find your player entry... creating a new one!");
+                targetPlayerEntry = new PlayerEntry(targetPlayer.getUniqueId().toString(), targetPlayer.getName(), defaultRep, 0.0, 0, defaultRep, 0.0, 0, new Date(), new Date());
+                targetPlayerEntry.setLastLogin(new Date());
+                repManager.savePlayerEntry(targetPlayerEntry);
+                repManager.loadPlayerCache(targetPlayer.getName());
+                return false;
+            }
+        } 
+        
+        // /rep show <player>
+        else if (args.length == 2) {
+            if (!sender.hasPermission("rep64.list.others")) {
+                sender.sendMessage(prefix + ChatColor.RED + "No permission!");
+                return false;
+            }
+            targetName = args[1];
+            targetPlayerEntry = repManager.getPlayerEntry(repManager.getPlayerUUID(targetName));
+            if (targetPlayerEntry == null) {
+                sender.sendMessage(prefix + ChatColor.RED + "Could not find target player's rep lists!");
+                return false;
+            }
+        }
+
+        if (targetPlayerEntry == null) {
+            sender.sendMessage(prefix + ChatColor.RED + "Could not find rep lists!");
+            return false;
+        }
+        
+        sender.sendMessage(ChatColor.DARK_PURPLE + "--- " + ChatColor.LIGHT_PURPLE + targetPlayerEntry.getPlayerUsername() + " Rep Lists" + ChatColor.DARK_PURPLE + " ---\n"
+            + ChatColor.GRAY + "Last Average: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverageLast()) + ChatColor.GRAY + " Current Average: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverage()) + "\n"
+            + ChatColor.GRAY + "Staff Modifier: " + ChatColor.WHITE + targetPlayerEntry.getRepStaffModifier() + ChatColor.GRAY + " Rep Count: " + ChatColor.WHITE + targetPlayerEntry.getRepCount()+ "\n"
+            + ChatColor.GRAY + "Initiators (have set score on " + targetPlayerEntry.getPlayerUsername() + "): " 
+        );
+        for (String n : repManager.getRepInitiators(targetPlayerEntry.getPlayerUUID())) {
+            int n_score = repManager.getRepEntry(repManager.getPlayerUUID(n), repManager.getPlayerUUID(targetName)).getRep();
+            sender.sendMessage(ChatColor.GRAY + "  - " + ChatColor.DARK_GRAY + n + ChatColor.GRAY + ": " + n_score);
+        }
+        sender.sendMessage(ChatColor.GRAY + "Receivers (have been scored by " + targetPlayerEntry.getPlayerUsername() + "): ");
+        for (String n : repManager.getRepReceivers(targetPlayerEntry.getPlayerUUID())) {
+            int n_score = repManager.getRepEntry(repManager.getPlayerUUID(targetName), repManager.getPlayerUUID(n)).getRep();
+            sender.sendMessage(ChatColor.GRAY + "  - " + ChatColor.DARK_GRAY + n + ChatColor.GRAY + ": " + n_score);
+        }
+        return true;
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> list = new ArrayList<>();
@@ -206,6 +294,12 @@ public class RepCommand implements TabExecutor {
             list.clear();
             for (String n : subCommands) {
                 if (n!=null && n.startsWith(args[0])) {
+                    list.add(n);
+                }
+            }
+            if (sender.hasPermission("rep64.list")) {
+                String n = "list";
+                if (n.startsWith(args[0])) {
                     list.add(n);
                 }
             }
@@ -217,9 +311,15 @@ public class RepCommand implements TabExecutor {
         }
         if (args.length == 2) {
             list.clear();
-            if ( !args[0].equalsIgnoreCase("help") ) {
+            if ( !args[0].equalsIgnoreCase("help") && !args[0].equalsIgnoreCase("list") ) {
                 for (String n : subSubCommands) {
-
+                    if (n!=null && n.startsWith(args[1])) {
+                        list.add(n);
+                    }
+                }
+            }
+            if (sender.hasPermission("rep64.list.others") && !args[0].equalsIgnoreCase("help")) {
+                for (String n : repManager.username_map.keySet()) {
                     if (n!=null && n.startsWith(args[1])) {
                         list.add(n);
                     }

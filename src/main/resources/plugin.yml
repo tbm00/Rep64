@@ -11,18 +11,24 @@ commands:
   repadmin:
     description: Set reputation modifier + more
 permissions:
-  rep64.admin:
-    description: Ability to use admin rep command
-    default: op
-  rep64.set.self:
-    description: Ability to give yourself a rep score
-    default: op
-  rep64.set:
-    description: Ability to give someone a rep score
-    default: true
   rep64.show:
     description: Ability to view your average reputation
     default: true
   rep64.show.others:
-    description: Ability to view others' average reputation
+    description: Ability to view others average reputation
     default: true
+  rep64.set:
+    description: Ability to give others a rep score
+    default: true
+  rep64.set.self:
+    description: Ability to give yourself a rep score
+    default: op
+  rep64.list:
+    description: Ability to view your rep lists
+    default: op
+  rep64.list.others:
+    description: Ability to view others rep lists
+    default: op
+  rep64.admin:
+    description: Ability to use admin commands
+    default: op
