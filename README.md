@@ -26,8 +26,8 @@ Created by tbm00 for play.mc64.wtf.
 - `/rep <player> ?` Display the rep score you gave player
 - `/rep <player> <#>` Give player a rep score
 - `/rep <player> unset` Delete your rep score on player
-- `/rep show` Display your rep lists (trimmed data)
-- `/rep show <player>` Display player's rep lists (trimmed data)
+- `/rep list` Display your rep lists (trimmed data)
+- `/rep list <player>` Display player's rep lists (trimmed data)
 
 #### Admin Commands
 - `/repadmin` Display this command list
