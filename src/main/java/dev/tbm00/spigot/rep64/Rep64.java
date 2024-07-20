@@ -12,7 +12,6 @@ import dev.tbm00.spigot.rep64.command.RepAdminCommand;
 import dev.tbm00.spigot.rep64.expansion.Rep64PAPI;
 
 public class Rep64 extends JavaPlugin {
-
     private MySQLConnection mysqlConnection;
     private RepManager repManager;
 
@@ -36,7 +35,7 @@ public class Rep64 extends JavaPlugin {
         this.repManager = new RepManager(this, this.mysqlConnection);
 
         // Register Listener
-        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this.repManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this, this.repManager), this);
 
         // Register Commands
         getCommand("rep").setExecutor(new RepCommand(this, this.repManager));

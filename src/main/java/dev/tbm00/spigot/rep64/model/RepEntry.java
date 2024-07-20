@@ -1,7 +1,6 @@
 package dev.tbm00.spigot.rep64.model;
 
 public class RepEntry {
-
     private int id;
     private String initiatorUUID;
     private String receiverUUID;

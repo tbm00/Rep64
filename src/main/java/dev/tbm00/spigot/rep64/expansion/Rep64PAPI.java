@@ -10,7 +10,6 @@ import dev.tbm00.spigot.rep64.RepManager;
 import dev.tbm00.spigot.rep64.model.PlayerEntry;
 
 public class Rep64PAPI extends PlaceholderExpansion {
-
     private final RepManager repManager;
     private final int defaultRep;
 

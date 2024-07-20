@@ -3,7 +3,6 @@ package dev.tbm00.spigot.rep64.model;
 import java.util.Date;
 
 public class PlayerEntry {
-
     private String playerUUID;
     private String playerUsername;
     private double repAverage;

@@ -74,6 +74,7 @@ public class RepCommand implements TabExecutor {
             case "list":
                 return handleListCommand(sender, args);
             default:
+                break;
         }
 
         // /rep <player>

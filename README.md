@@ -10,7 +10,6 @@ Created by tbm00 for play.mc64.wtf.
 - Add reload config command.
 - Add more placeholders.
 - Create lang.yml file so server admins can modify the plugin's messages.
-- Create a listener that will run commands (configurable in config.yml) if a player's rep average is below a threshold for a certain amount of time, or possibly at a specific time.
 - Create inventory GUI that players can view and set reputations in.
 
 ## Dependencies
@@ -77,4 +76,40 @@ repScoring:
   minRep: 0
   maxModifier: 10
   minModifier: -10
+
+# Run commands when a player join the server.
+logicCommandEntries:
+  enabled: false
+  # leftOperand: trueAvg, shownAvg
+  # Operator: ==, !=, >, >=, <, <=
+  # rightOperand: a double
+  # command: can include <player>, <trueAvg>, and <shownAvg>
+  '1':
+    enabled: true
+    leftOperand: "shownAvg"
+    operator: "=="
+    rightOperand: 5.0
+    command: "say <player>'s rep avg is equal to 5.0!"
+  '2':
+    enabled: true
+    leftOperand: "shownAvg"
+    operator: "!="
+    rightOperand: 5.0
+    command: "say <player>'s rep avg is not equal to 5.0!"
+  '3':
+    enabled: true
+    leftOperand: "trueAvg"
+    operator: ">"
+    rightOperand: 2.0
+    command: "say <player>'s actual rep avg is greater than 2!"
+  '4':
+    enabled: true
+    leftOperand: "trueAvg"
+    operator: "<="
+    rightOperand: 2.0
+    command: "say <player>'s actual rep avg is less than (or equal to) 2!"
+  # Add more entries as needed
+
+  # * These are example command entries; MC64 doesn't expose players'
+  #   true rep avg, only the shown rep avg.
 ```

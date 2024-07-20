@@ -5,7 +5,6 @@ import java.sql.*;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MySQLConnection {
-
     private Connection connection;
     private JavaPlugin javaPlugin;
 
