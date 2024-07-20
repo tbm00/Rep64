@@ -3,14 +3,14 @@ A spigot plugin that enables player reputations.
 
 Created by tbm00 for play.mc64.wtf.
 
-## Potential Plans
-- Finish testing & release the plugin on Spigot.
-- Downgrade Java version.
-- Add SQLite as alternative to MySQL.
-- Add reload config command.
-- Add more placeholders.
-- Create lang.yml file so server admins can modify the plugin's messages.
-- Create inventory GUI that players can view and set reputations in.
+## Features
+- Players can give each other reputation scores, with averages shown to everyone.
+- Commands to view detailed reputations lists in game.
+- Admins can give players modifiers, which gets added to a player's average.
+- Admin commands to manage player and reputation entries in game.
+- Ability to run any command when a player joins, triggered by the player's average reputation.
+- Placeholders returning a given player's shown reputation.
+- Configurable reputation value range.
 
 ## Dependencies
 - **Java 17+**: REQUIRED
@@ -113,3 +113,12 @@ logicCommandEntries:
   # * These are example command entries; MC64 doesn't expose players'
   #   true rep avg, only the shown rep avg.
 ```
+
+## Potential Plans
+- Finish testing & release the plugin on Spigot.
+- Downgrade Java version.
+- Add SQLite as alternative to MySQL.
+- Add reload config command.
+- Add more placeholders.
+- Create lang.yml file so server admins can modify the plugin's messages.
+- Create inventory GUI that players can view and set reputations in.
