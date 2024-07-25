@@ -18,7 +18,7 @@ public class Rep64 extends JavaPlugin {
     @Override
     public void onEnable() {
         // Startup Message
-        final PluginDescriptionFile pdf = this.getDescription();
+        final PluginDescriptionFile pdf = getDescription();
 		log(
             ChatColor.DARK_PURPLE + "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-",
             pdf.getName() + " v" + pdf.getVersion() + " created by tbm00",
@@ -26,20 +26,20 @@ public class Rep64 extends JavaPlugin {
 		);
 
         // Load Config
-        this.saveDefaultConfig();
+        saveDefaultConfig();
 
         // Connect to MySQL
-        this.mysqlConnection = new MySQLConnection(this);
+        mysqlConnection = new MySQLConnection(this);
 
         // Connect RepManager
-        this.repManager = new RepManager(this, this.mysqlConnection);
+        repManager = new RepManager(this, mysqlConnection);
 
         // Register Listener
-        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this, this.repManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this, repManager), this);
 
         // Register Commands
-        getCommand("rep").setExecutor(new RepCommand(this, this.repManager));
-        getCommand("repadmin").setExecutor(new RepAdminCommand(this, this.repManager));
+        getCommand("rep").setExecutor(new RepCommand(this, repManager));
+        getCommand("repadmin").setExecutor(new RepAdminCommand(this, repManager));
 
         // Register Placeholder
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
@@ -49,12 +49,12 @@ public class Rep64 extends JavaPlugin {
         }
 
         // Register CacheManager
-        new CacheManager(this, this.repManager);
+        new CacheManager(this, repManager);
     }
 
     @Override
     public void onDisable() {
-        this.mysqlConnection.closeConnection();
+        mysqlConnection.closeConnection();
     }
 
     public MySQLConnection getDatabase() {

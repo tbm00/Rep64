@@ -45,7 +45,7 @@ Created by tbm00 for play.mc64.wtf.
 - `rep64.show` Ability to view your average reputation *(default: everyone)*.
 - `rep64.show.others` Ability to view others' average reputation *(default: everyone)*.
 - `rep64.set` Ability to give others a rep score *(default: everyone)*.
-- `rep64.set.others` Ability to give yourself a rep score *(default: op)*. 
+- `rep64.set.set` Ability to give yourself a rep score *(default: op)*. 
 - `rep64.list` Ability to view your rep lists (trimmed data) *(default: op)*.
 - `rep64.list.others` Ability to view others' rep lists (trimmed data) *(default: op)*.
 

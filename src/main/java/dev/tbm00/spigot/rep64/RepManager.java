@@ -32,17 +32,9 @@ public class RepManager {
     }
 
     public void reload() {
-        // reload Connection
         db.closeConnection();
         db.openConnection();
-
-        // refresh caches with information for online players
-        player_map.clear();
-        username_map.clear();
-        rep_map.clear();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            loadPlayerCache(player.getName());
-        }
+        reloadCache();
     }
 
     public void reloadCache() {
