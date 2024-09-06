@@ -4,7 +4,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import dev.tbm00.spigot.rep64.data.CacheManager;
 import dev.tbm00.spigot.rep64.data.MySQLConnection;
 import dev.tbm00.spigot.rep64.listener.PlayerJoinLeave;
 import dev.tbm00.spigot.rep64.command.RepCommand;
@@ -29,7 +28,13 @@ public class Rep64 extends JavaPlugin {
         saveDefaultConfig();
 
         // Connect to MySQL
-        mysqlConnection = new MySQLConnection(this);
+        try {
+            mysqlConnection = new MySQLConnection(this);
+        } catch (Exception e) {
+            getLogger().severe("Failed to connect to MySQL. Disabling plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         // Connect RepManager
         repManager = new RepManager(this, mysqlConnection);
@@ -47,9 +52,6 @@ public class Rep64 extends JavaPlugin {
         } else {
             getLogger().warning("PlaceholderAPI not found!");
         }
-
-        // Register CacheManager
-        new CacheManager(this, repManager);
     }
 
     @Override

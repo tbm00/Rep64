@@ -3,6 +3,7 @@ package dev.tbm00.spigot.rep64.command;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -15,8 +16,9 @@ import dev.tbm00.spigot.rep64.model.PlayerEntry;
 import dev.tbm00.spigot.rep64.model.RepEntry;
 
 public class RepAdminCommand implements TabExecutor {
+    private final JavaPlugin javaPlugin;
     private final RepManager repManager;
-    private final String[] subCommands = new String[]{"mod", "show", "deleteRepsBy", "deleteRepsOn", "delete", "reset", "reloadData"};
+    private final String[] subCommands = new String[]{"mod", "show", "deleteRepsBy", "deleteRepsOn", "delete", "reset", "reloadCache"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
     private final double maxModifier;
     private final double minModifier;
@@ -24,6 +26,7 @@ public class RepAdminCommand implements TabExecutor {
     private final double minModifierInt;
 
     public RepAdminCommand(JavaPlugin javaPlugin, RepManager repManager) {
+        this.javaPlugin = javaPlugin;
         this.repManager = repManager;
         this.maxModifier = javaPlugin.getConfig().getInt("repScoring.maxModifier");
         this.minModifier = javaPlugin.getConfig().getInt("repScoring.minModifier");
@@ -37,47 +40,57 @@ public class RepAdminCommand implements TabExecutor {
             sender.sendMessage(prefix + ChatColor.RED + "No permission!");
             return false;
         }
-        // /repadmin
-        if (args.length == 0) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
-                return false;
+        Bukkit.getScheduler().runTaskAsynchronously(javaPlugin, () -> {
+            // /repadmin
+            if (args.length == 0) {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(prefix + ChatColor.RED + "This command can only be run by a player!");
+                    return;
+                }
+                sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + "Rep64 Admin Commands" + ChatColor.DARK_RED + " ---\n"
+                    + ChatColor.WHITE + "/repadmin" + ChatColor.GRAY + " Display this command list\n"
+                    + ChatColor.WHITE + "/repadmin mod <player> <#>" + ChatColor.GRAY + " Set player's rep modifier (gets added to rep avg)\n"
+                    + ChatColor.WHITE + "/repadmin show <player>" + ChatColor.GRAY + " Display player's rep data\n"
+                    + ChatColor.WHITE + "/repadmin show <initiator> <receiver>" + ChatColor.GRAY + " Display a specific RepEntry\n"
+                    + ChatColor.WHITE + "/repadmin delete <initiator> <receiver>" + ChatColor.GRAY + " Delete a specific RepEntry\n"
+                    + ChatColor.WHITE + "/repadmin deleteRepsBy <initiator>" + ChatColor.GRAY + " Delete RepEntries created by initiator\n"
+                    + ChatColor.WHITE + "/repadmin deleteRepsOn <receiver>" + ChatColor.GRAY + " Delete RepEntries created on receiver\n"
+                    + ChatColor.WHITE + "/repadmin reset <player>" + ChatColor.GRAY + " Reset PlayerEntry & delete all associated RepEntries\n"
+                    + ChatColor.WHITE + "/repadmin reloadCache" + ChatColor.GRAY + " Reload plugin's cache\n"
+                    );
+                return;
             }
-            sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + "Rep64 Admin Commands" + ChatColor.DARK_RED + " ---\n"
-                + ChatColor.WHITE + "/repadmin" + ChatColor.GRAY + " Display this command list\n"
-                + ChatColor.WHITE + "/repadmin mod <player> <#>" + ChatColor.GRAY + " Set player's rep modifier (defaults to 0, added to rep avg)\n"
-                + ChatColor.WHITE + "/repadmin show <player>" + ChatColor.GRAY + " Display player's rep data\n"
-                + ChatColor.WHITE + "/repadmin show <initiator> <receiver>" + ChatColor.GRAY + " Display a specific RepEntry\n"
-                + ChatColor.WHITE + "/repadmin delete <initiator> <receiver>" + ChatColor.GRAY + " Delete a specific RepEntry\n"
-                + ChatColor.WHITE + "/repadmin deleteRepsBy <initiator>" + ChatColor.GRAY + " Delete RepEntries created by initiator\n"
-                + ChatColor.WHITE + "/repadmin deleteRepsOn <receiver>" + ChatColor.GRAY + " Delete RepEntries created on receiver\n"
-                + ChatColor.WHITE + "/repadmin reset <player>" + ChatColor.GRAY + " Reset PlayerEntry & delete all associated RepEntries\n"
-                + ChatColor.WHITE + "/repadmin reloadData" + ChatColor.GRAY + " Reload MySQL database and plugin's cache\n"
-                );
-            return true;
-        }
 
-        String subCommand = args[0].toLowerCase();
+            String subCommand = args[0].toLowerCase();
 
-        switch (subCommand) {
-            case "mod":
-                return handleModCommand(sender, args);
-            case "show":
-                return handleShowCommand(sender, args);
-            case "delete":
-                return handleDeleteCommand(sender, args);
-            case "deleterepsby":
-                return handleDeleteRepsByCommand(sender, args);
-            case "deleterepson":
-                return handleDeleteRepsOnCommand(sender, args);
-            case "reset":
-                return handleResetCommand(sender, args);
-            case "reloaddata":
-                return handleReloadCommand(sender, args);
-            default:
-                sender.sendMessage(prefix + ChatColor.RED + "Unknown subcommand!");
-                return false;
-        }
+            switch (subCommand) {
+                case "mod":
+                    handleModCommand(sender, args);
+                    return;
+                case "show":
+                    handleShowCommand(sender, args);
+                    return;
+                case "delete":
+                    handleDeleteCommand(sender, args);
+                    return;
+                case "deleterepsby":
+                    handleDeleteRepsByCommand(sender, args);
+                    return;
+                case "deleterepson":
+                    handleDeleteRepsOnCommand(sender, args);
+                    return;
+                case "reset":
+                    handleResetCommand(sender, args);
+                    return;
+                case "reloadcache":
+                    handleReloadCommand(sender, args);
+                    return;
+                default:
+                    sender.sendMessage(prefix + ChatColor.RED + "Unknown subcommand!");
+                    return;
+            }
+        });
+        return true;
     }
 
     private boolean handleModCommand(CommandSender sender, String[] args) {
@@ -113,7 +126,7 @@ public class RepAdminCommand implements TabExecutor {
         // refresh targetPlayerEntry
         targetPlayerEntry = repManager.getPlayerEntry(targetUUID);
 
-        sender.sendMessage(prefix + ChatColor.GREEN + "Applied staff reputation modifier: " + amount + " to " + targetName);
+        sender.sendMessage(prefix + ChatColor.GREEN + "Applied reputation modifier: " + amount + " to " + targetName);
         sender.sendMessage(ChatColor.YELLOW 
             + " -----Last AVG: " + String.format("%.1f", targetPlayerEntry.getRepAverageLast()) + "  -----Current AVG: " + String.format("%.1f", targetPlayerEntry.getRepAverage()) + "\n"
             + "Last Shown AVG: " + String.format("%.1f", targetPlayerEntry.getRepShownLast())   + " Current Shown AVG: " + String.format("%.1f", targetPlayerEntry.getRepShown())
@@ -130,7 +143,7 @@ public class RepAdminCommand implements TabExecutor {
                 sender.sendMessage(ChatColor.DARK_RED + "--- " + ChatColor.RED + targetPlayerEntry.getPlayerUsername() + " Rep Data" + ChatColor.DARK_RED + " ---\n"
                     + ChatColor.GRAY + " -----Last AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverageLast()) + ChatColor.GRAY + "  -----Current AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepAverage()) + "\n"
                     + ChatColor.GRAY + "Last Shown AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepShownLast()) + ChatColor.GRAY +   " Current Shown AVG: " + ChatColor.WHITE + String.format("%.1f", targetPlayerEntry.getRepShown()) + "\n"
-                    + ChatColor.GRAY + "Staff Modifier: " + ChatColor.WHITE + targetPlayerEntry.getRepStaffModifier() + ChatColor.GRAY + " Rep Count: " + ChatColor.WHITE + targetPlayerEntry.getRepCount()+ "\n"
+                    + ChatColor.GRAY + "Rep Modifier: " + ChatColor.WHITE + targetPlayerEntry.getRepModifier() + ChatColor.GRAY + " Rep Count: " + ChatColor.WHITE + targetPlayerEntry.getRepCount()+ "\n"
                     + ChatColor.GRAY + "Initiators (have set score on " + targetPlayerEntry.getPlayerUsername() + "): " 
                 );
                 for (String n : repManager.getRepInitiators(targetPlayerEntry.getPlayerUUID())) {
@@ -226,16 +239,16 @@ public class RepAdminCommand implements TabExecutor {
     private boolean handleReloadCommand(CommandSender sender, String[] args) {
         // /repadmin reloadData
         if (args.length != 1) {
-            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin reloadData");
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin reloadCache");
             return false;
         }
         try {
-            repManager.reload();
-            sender.sendMessage(prefix + ChatColor.GREEN + "You successfully reloaded the databases!");
+            repManager.reloadCache();
+            sender.sendMessage(prefix + ChatColor.GREEN + "You successfully reloaded the cache!");
             return true;
         } catch (Exception e){
-            System.out.println("Error reloading databases!");
-            sender.sendMessage(prefix + ChatColor.RED + "Error reloading databases!");
+            javaPlugin.getLogger().warning("Error reloading cache!");
+            sender.sendMessage(prefix + ChatColor.RED + "Error reloading cache!");
         }
         return true;
     }
@@ -253,7 +266,7 @@ public class RepAdminCommand implements TabExecutor {
         }
         if (args.length == 2) {
             list.clear();
-            if ( !args[0].equalsIgnoreCase("reloadData") ) {
+            if ( !args[0].equalsIgnoreCase("reloadCache") ) {
                 for (String n : repManager.username_map.keySet()) {
                     if (n!=null && n.startsWith(args[1])) {
                         list.add(n);

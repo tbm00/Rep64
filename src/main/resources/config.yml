@@ -1,23 +1,35 @@
-database:
+mysql:
   host: 'host'
-  port: '3306'
+  port: 3306
   database: 'db'
   username: 'user'
   password: 'pass'
-  options: '?autoReconnect=true'
+  useSSL: false
+  hikari:
+    maximumPoolSize: 12
+    minimumPoolSize: 2
 
 autoCacheReloader:
   enabled: true
   ticksBetween: 36000
 
+# Notch's trueAvg = average(rep scores set on Notch by other players)
+# Notch's shownAvg = trueAvg + repModifier
+# repModifier defaults to 0 & gets applied by staff with `/repadmin mod Notch #`
 repScoring:
+  # default rep score when a player first joins
   defaultRep: 5
+  # maximum rep score a player can give someone else
   maxRep: 10
+  # minimum rep score a player can give someone else
   minRep: 0
+  # minimum modifier staff can give a player
   maxModifier: 10
+  # minimum modifier staff can give a player
   minModifier: -10
 
 # Run commands when a player join the server.
+# These are just examples and should be modified.
 logicCommandEntries:
   enabled: false
   # leftOperand: trueAvg, shownAvg
@@ -49,6 +61,3 @@ logicCommandEntries:
     rightOperand: 2.0
     command: "say <player>'s actual rep avg is less than (or equal to) 2!"
   # Add more entries as needed
-
-  # * These are example command entries; MC64 doesn't expose players'
-  #   true rep avg, only the shown rep avg.

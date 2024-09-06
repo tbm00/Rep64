@@ -6,11 +6,10 @@ Created by tbm00 for play.mc64.wtf.
 ## Features
 - Players can give each other reputation scores, with averages shown to everyone.
 - Commands to view detailed reputations lists in game.
-- Admins can give players modifiers, which gets added to a player's average.
-- Admin commands to manage player and reputation entries in game.
-- Ability to run any command when a player joins, triggered by the player's average reputation.
-- Placeholders returning a given player's shown reputation.
-- Configurable reputation value range.
+- Many admin commands to manage player's reputations in game.
+- Ability to run commands on player joins, triggered by the player's average reputation.
+- Placeholders returning a player's reputation.
+- Configurable reputation score range.
 
 ## Dependencies
 - **Java 17+**: REQUIRED
@@ -31,21 +30,21 @@ Created by tbm00 for play.mc64.wtf.
 
 #### Admin Commands
 - `/repadmin` Display this command list
-- `/repadmin mod <player> <#>` Set player's rep modifier (defaults to 0, added to rep avg)
+- `/repadmin mod <player> <#>` Set player's rep modifier (gets added to rep avg)
 - `/repadmin show <player>` Display player's rep data
 - `/repadmin show <initiator> <receiver>` Display a specific RepEntry
 - `/repadmin delete <initiator> <receiver>` Delete a specific RepEntry
 - `/repadmin deleteRepsBy <initiator>` Delete RepEntries created by initiator
 - `/repadmin deleteRepsOn <receiver>` Delete RepEntries created on receiver
 - `/repadmin reset <player>` Reset PlayerEntry & delete all associated RepEntries
-- `/repadmin reloadData` Reload MySQL database and plugin's cache
+- `/repadmin reloadCache` Reload plugin's cache
 
 ## Permissions
 #### Player Permissions
 - `rep64.show` Ability to view your average reputation *(default: everyone)*.
 - `rep64.show.others` Ability to view others' average reputation *(default: everyone)*.
 - `rep64.set` Ability to give others a rep score *(default: everyone)*.
-- `rep64.set.set` Ability to give yourself a rep score *(default: op)*. 
+- `rep64.set.self` Ability to give yourself a rep score *(default: op)*. 
 - `rep64.list` Ability to view your rep lists (trimmed data) *(default: op)*.
 - `rep64.list.others` Ability to view others' rep lists (trimmed data) *(default: op)*.
 
@@ -58,26 +57,38 @@ Created by tbm00 for play.mc64.wtf.
 
 ## Config
 ```
-database:
+mysql:
   host: 'host'
-  port: '3306'
+  port: 3306
   database: 'db'
   username: 'user'
   password: 'pass'
-  options: '?autoReconnect=true'
+  useSSL: false
+  hikari:
+    maximumPoolSize: 12
+    minimumPoolSize: 2
 
 autoCacheReloader:
   enabled: true
   ticksBetween: 36000
 
+# Notch's trueAvg = average(rep scores set on Notch by other players)
+# Notch's shownAvg = trueAvg + repModifier
+# repModifier defaults to 0 & gets applied by staff with `/repadmin mod Notch #`
 repScoring:
+  # default rep score when a player first joins
   defaultRep: 5
+  # maximum rep score a player can give someone else
   maxRep: 10
+  # minimum rep score a player can give someone else
   minRep: 0
+  # minimum modifier staff can give a player
   maxModifier: 10
+  # minimum modifier staff can give a player
   minModifier: -10
 
 # Run commands when a player join the server.
+# These are just examples and should be modified.
 logicCommandEntries:
   enabled: false
   # leftOperand: trueAvg, shownAvg
@@ -109,16 +120,4 @@ logicCommandEntries:
     rightOperand: 2.0
     command: "say <player>'s actual rep avg is less than (or equal to) 2!"
   # Add more entries as needed
-
-  # * These are example command entries; MC64 doesn't expose players'
-  #   true rep avg, only the shown rep avg.
 ```
-
-## Potential Plans
-- Finish testing & release the plugin on Spigot.
-- Downgrade Java version.
-- Add SQLite as alternative to MySQL.
-- Add reload config command.
-- Add more placeholders.
-- Create lang.yml file so server admins can modify the plugin's messages.
-- Create inventory GUI that players can view and set reputations in.
