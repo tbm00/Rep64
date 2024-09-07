@@ -23,14 +23,18 @@ public class RepManager {
     public final Map<String, String> username_map; // key = username
     private final Map<String, PlayerEntry> player_map; // key = UUID
     private final Map<String, Map<String, RepEntry>> rep_map; // key1 = initiatorUUID, key2= receiverUUID
+    private final Map<String, Double> shown_rep_map; // key = UUID
+    private final double defaultRep;
 
 
     public RepManager(JavaPlugin javaPlugin, MySQLConnection database) {
         this.javaPlugin = javaPlugin;
         this.db = database;
+        this.defaultRep = javaPlugin.getConfig().getInt("repScoring.defaultRep");
         this.player_map = new HashMap<>();
         this.rep_map = new HashMap<>();
         this.username_map = new HashMap<>();
+        this.shown_rep_map = new HashMap<>();
         startCacheSchedule();
     }
 
@@ -59,6 +63,8 @@ public class RepManager {
         player_map.clear();
         username_map.clear();
         rep_map.clear();
+        shown_rep_map.clear();
+        
         for (Player player : Bukkit.getOnlinePlayers()) {
             loadPlayerCache(player.getName());
         }
@@ -74,18 +80,19 @@ public class RepManager {
         // save to username_map
         username_map.put(username, UUID);
 
-        // save to player_map
+        // save to player_map & shown_rep_map
         PlayerEntry playerEntry = getPlayerEntry(UUID);
         if (playerEntry != null) {
             player_map.put(UUID, playerEntry);
+            shown_rep_map.put(UUID, playerEntry.getRepShown());
         } else {
             javaPlugin.getLogger().warning("Error: Could not find PlayerEntry for UUID!");
             return;
         }
 
         // save to rep_map
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ? OR initiator_UUID = ?")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ? OR initiator_UUID = ?")) {
             statement.setString(1, UUID);
             statement.setString(2, UUID);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -106,6 +113,10 @@ public class RepManager {
         }
     }
 
+    public Double getShownRepFromCache(String uuid) {
+        return shown_rep_map.getOrDefault(uuid, defaultRep);
+    }
+
     public void unloadPlayerCache(String username) {
         String UUID = getPlayerUUID(username);
         if (UUID == null) {
@@ -118,6 +129,7 @@ public class RepManager {
 
         // remove from player_map
         player_map.remove(UUID);
+        shown_rep_map.remove(UUID);
 
         // remove from rep_map
         List<String> onlinePlayersUUIDs = new ArrayList<>();
@@ -141,8 +153,8 @@ public class RepManager {
         if (username_map.containsKey(username)) {
             return username_map.get(username); // return UUID from map
         } else {
-            try (PreparedStatement statement = db.getConnection()
-                    .prepareStatement("SELECT * FROM rep64_players WHERE username = ?")) {
+            try (Connection connection = db.getConnection();
+                PreparedStatement statement = connection.prepareStatement("SELECT * FROM rep64_players WHERE username = ?")) {
                 statement.setString(1, username);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     if (resultSet.next()) return resultSet.getString("uuid");
@@ -158,8 +170,8 @@ public class RepManager {
     }
 
     public String getPlayerUsername(String UUID) {
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("SELECT * FROM rep64_players WHERE uuid = ?")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM rep64_players WHERE uuid = ?")) {
             statement.setString(1, UUID);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) return resultSet.getString("username");
@@ -180,8 +192,8 @@ public class RepManager {
         if (player_map.containsKey(UUID)) {
             return player_map.get(UUID);
         } else {
-            try (PreparedStatement statement = db.getConnection()
-                    .prepareStatement("SELECT * FROM rep64_players WHERE uuid = ?")) {
+            try (Connection connection = db.getConnection();
+                PreparedStatement statement = connection.prepareStatement("SELECT * FROM rep64_players WHERE uuid = ?")) {
                 statement.setString(1, UUID);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     PlayerEntry entry;
@@ -225,8 +237,8 @@ public class RepManager {
         }
 
         // save to sql
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("REPLACE INTO rep64_players (uuid, username, rep_avg, rep_avg_last, rep_staff_modifier, rep_shown, rep_shown_last, rep_count, last_login, last_logout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("REPLACE INTO rep64_players (uuid, username, rep_avg, rep_avg_last, rep_staff_modifier, rep_shown, rep_shown_last, rep_count, last_login, last_logout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             statement.setString(1, playerEntry.getPlayerUUID());
             statement.setString(2, playerEntry.getPlayerUsername());
             statement.setDouble(3, playerEntry.getRepAverage());
@@ -261,8 +273,8 @@ public class RepManager {
         }
 
         // save to sql
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("REPLACE INTO rep64_players (uuid, username, rep_avg, rep_avg_last, rep_staff_modifier, rep_shown, rep_shown_last, rep_count, last_login, last_logout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("REPLACE INTO rep64_players (uuid, username, rep_avg, rep_avg_last, rep_staff_modifier, rep_shown, rep_shown_last, rep_count, last_login, last_logout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             statement.setString(1, playerEntry.getPlayerUUID());
             statement.setString(2, playerEntry.getPlayerUsername());
             statement.setDouble(3, playerEntry.getRepAverage());
@@ -287,8 +299,8 @@ public class RepManager {
         if (rep_map.containsKey(initiatorUUID) && rep_map.get(initiatorUUID).containsKey(receiverUUID)) {
             return rep_map.get(initiatorUUID).get(receiverUUID);
         } else {
-            try (PreparedStatement statement = db.getConnection()
-                    .prepareStatement("SELECT * FROM rep64_reps WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
+            try (Connection connection = db.getConnection();
+                PreparedStatement statement = connection.prepareStatement("SELECT * FROM rep64_reps WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
                 statement.setString(1, initiatorUUID);
                 statement.setString(2, receiverUUID);
                 try (ResultSet resultSet = statement.executeQuery()) {
@@ -314,10 +326,10 @@ public class RepManager {
         Set<String> initiatorList = new HashSet<>();
 
         // get receiver list from SQL
-        try (PreparedStatement selectStatement = db.getConnection()
-            .prepareStatement("SELECT initiator_UUID FROM rep64_reps WHERE receiver_UUID = ?")) {
-            selectStatement.setString(1, receiverUUID);
-            try (ResultSet resultSet = selectStatement.executeQuery()) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("SELECT initiator_UUID FROM rep64_reps WHERE receiver_UUID = ?")) {
+            statement.setString(1, receiverUUID);
+            try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     initiatorList.add(getPlayerUsername(resultSet.getString("initiator_UUID")));
                 }
@@ -333,10 +345,10 @@ public class RepManager {
     public Set<String> getRepReceivers(String initiatorUUID) {
         Set<String> receiverList = new HashSet<>();
         // get receiver list from SQL
-        try (PreparedStatement selectStatement = db.getConnection()
-            .prepareStatement("SELECT receiver_UUID FROM rep64_reps WHERE initiator_UUID = ?")) {
-            selectStatement.setString(1, initiatorUUID);
-            try (ResultSet resultSet = selectStatement.executeQuery()) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("SELECT receiver_UUID FROM rep64_reps WHERE initiator_UUID = ?")) {
+            statement.setString(1, initiatorUUID);
+            try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     receiverList.add(getPlayerUsername(resultSet.getString("receiver_UUID")));
                 }
@@ -351,8 +363,8 @@ public class RepManager {
 
     public PlayerEntry calculateRepAverage(PlayerEntry entry) {
         String UUID = entry.getPlayerUUID();
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM rep64_reps WHERE receiver_UUID = ?")) {
             statement.setString(1, UUID);
     
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -375,7 +387,7 @@ public class RepManager {
                 }
 
                 // calculate new average
-                double newAverage = javaPlugin.getConfig().getInt("repScoring.defaultRep");
+                double newAverage = defaultRep;
                 if (!repList.isEmpty()) {
                     // calculate new rep average
                     double sum = 0.0;
@@ -395,6 +407,7 @@ public class RepManager {
             e.printStackTrace();
             return null;
         }
+
     }
 
     // saves rep entry to database(SQL) then refreshes cache(maps)
@@ -417,19 +430,19 @@ public class RepManager {
                 player_map.put(receiverUUID, playerEntry);
             }
             // increase rep_count in sql
-            try (PreparedStatement updateStatement = db.getConnection()
-                    .prepareStatement("UPDATE rep64_players SET rep_count = rep_count + 1 WHERE UUID = ?")) {
-                updateStatement.setString(1, receiverUUID);
-                updateStatement.executeUpdate();
+            try (Connection connection = db.getConnection();
+                PreparedStatement statement = connection.prepareStatement("UPDATE rep64_players SET rep_count = rep_count + 1 WHERE UUID = ?")) {
+                statement.setString(1, receiverUUID);
+                statement.executeUpdate();
             } catch (SQLException e) {
                 javaPlugin.getLogger().warning("Exception: Could not save increased rep count to SQL!");
                 e.printStackTrace();
             }
 
             // create new rep entry in sql
-            try (PreparedStatement statement = db.getConnection()
-                    .prepareStatement("INSERT INTO rep64_reps (initiator_UUID, receiver_UUID, rep) VALUES (?, ?, ?)", 
-                    Statement.RETURN_GENERATED_KEYS)) {
+            try (Connection connection = db.getConnection();
+                PreparedStatement statement = connection.prepareStatement("INSERT INTO rep64_reps (initiator_UUID, receiver_UUID, rep) VALUES (?, ?, ?)", 
+                Statement.RETURN_GENERATED_KEYS)) {
                 statement.setString(1, initiatorUUID);
                 statement.setString(2, receiverUUID);
                 statement.setInt(3, repEntry.getRep());
@@ -452,8 +465,8 @@ public class RepManager {
             rep_map.get(initiatorUUID).put(receiverUUID, repEntry);
 
             // update existing rep entry in sql
-            try (PreparedStatement statement = db.getConnection()
-                    .prepareStatement("UPDATE rep64_reps SET rep = ? WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
+            try (Connection connection = db.getConnection();
+                PreparedStatement statement = connection.prepareStatement("UPDATE rep64_reps SET rep = ? WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
                 statement.setInt(1, repEntry.getRep());
                 statement.setString(2, initiatorUUID);
                 statement.setString(3, receiverUUID);
@@ -466,6 +479,8 @@ public class RepManager {
         }
         
         // recalculate and save
+        unloadPlayerCache(getPlayerUsername(receiverUUID));
+        loadPlayerCache(getPlayerUsername(receiverUUID));
         savePlayerEntry(getPlayerEntry(receiverUUID));
     }
 
@@ -481,8 +496,8 @@ public class RepManager {
         }
 
         // delete from sql
-        try (PreparedStatement statement = db.getConnection()
-            .prepareStatement("DELETE FROM rep64_reps WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("DELETE FROM rep64_reps WHERE initiator_UUID = ? AND receiver_UUID = ?")) {
             statement.setString(1, initiatorUUID);
             statement.setString(2, receiverUUID);
             statement.executeUpdate();
@@ -515,8 +530,8 @@ public class RepManager {
         }
 
         // delete from sql
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("DELETE FROM rep64_reps WHERE initiator_UUID = ?")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("DELETE FROM rep64_reps WHERE initiator_UUID = ?")) {
             statement.setString(1, initiatorUUID);
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -528,10 +543,10 @@ public class RepManager {
         // recalculate and save
         for (String n : receiverList) {
             if (n != null) {
-                PlayerEntry targetPlayerEntry = getPlayerEntry(getPlayerUUID(n));
+                PlayerEntry targetPlayerEntry = getPlayerEntry(n);
                 if (targetPlayerEntry != null) {
-                    unloadPlayerCache(targetPlayerEntry.getPlayerUsername());
-                    loadPlayerCache(targetPlayerEntry.getPlayerUsername());
+                    unloadPlayerCache(getPlayerUsername(n));
+                    loadPlayerCache(getPlayerUsername(n));
                     savePlayerEntry(targetPlayerEntry);
                 } else {
                     javaPlugin.getLogger().warning("Error: Could not find player entry for UUID when saving!");
@@ -555,8 +570,8 @@ public class RepManager {
         rep_map.entrySet().removeIf(entry -> entry.getValue().isEmpty());
         
         // delete from sql
-        try (PreparedStatement statement = db.getConnection()
-                .prepareStatement("DELETE FROM rep64_reps WHERE receiver_UUID = ?")) {
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("DELETE FROM rep64_reps WHERE receiver_UUID = ?")) {
             statement.setString(1, receiverUUID);
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -564,6 +579,8 @@ public class RepManager {
             e.printStackTrace();
             return;
         }
+
+        
 
         // recalculate and save
         PlayerEntry targetPlayerEntry = getPlayerEntry(receiverUUID);

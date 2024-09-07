@@ -67,25 +67,22 @@ public class PlayerJoinLeave implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        long tickDelay = 20;
-        Player player = event.getPlayer();
+        //long tickDelay = 20;
         BukkitScheduler scheduler = javaPlugin.getServer().getScheduler();
 
         // run task later
-        scheduler.runTaskLaterAsynchronously(javaPlugin, () -> {
-            if (!player.isOnline()) return;
-            else {
-                PlayerEntry targetPlayerEntry = loadPlayerEntryFromData(player);
-                targetPlayerEntry.setLastLogin(new Date());
-                repManager.savePlayerEntry(targetPlayerEntry);
-                repManager.loadPlayerCache(player.getName());
+        scheduler.runTaskAsynchronously(javaPlugin, () -> {
+            Player player = event.getPlayer();
+            PlayerEntry targetPlayerEntry = loadPlayerEntryFromData(player);
+            targetPlayerEntry.setLastLogin(new Date());
+            repManager.savePlayerEntry(targetPlayerEntry);
+            repManager.loadPlayerCache(player.getName());
 
-                // join listener commands
-                if (commandEntriesEnabled) {
-                    processJoinCommands(player, targetPlayerEntry);
-                }
+            // join listener commands
+            if (commandEntriesEnabled) {
+                processJoinCommands(player, targetPlayerEntry);
             }
-        }, tickDelay);
+        });
     }
 
     public PlayerEntry loadPlayerEntryFromData(Player player) {

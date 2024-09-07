@@ -7,7 +7,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import dev.tbm00.spigot.rep64.RepManager;
-import dev.tbm00.spigot.rep64.model.PlayerEntry;
 
 public class Rep64PAPI extends PlaceholderExpansion {
     private final RepManager repManager;
@@ -30,7 +29,7 @@ public class Rep64PAPI extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getVersion() {
-        return "0.4";
+        return "0.5";
     }
 
     @Override
@@ -39,16 +38,11 @@ public class Rep64PAPI extends PlaceholderExpansion {
             return String.valueOf(defaultRep);
         }
 
-        PlayerEntry playerEntry = repManager.getPlayerEntry(player.getUniqueId().toString());
-        if (playerEntry == null) {
-            return String.valueOf(defaultRep);
-        }
-
         switch (identifier) {
             case "rep_shown":
-                return String.format("%.1f", playerEntry.getRepShown());
+                return String.format("%.1f", repManager.getShownRepFromCache(player.getUniqueId().toString()));
             case "rep_shown_int":
-                return String.valueOf((int) Math.round(playerEntry.getRepShown()));
+                return String.valueOf((int) Math.round(repManager.getShownRepFromCache(player.getUniqueId().toString())));
             default:
                 return null;
         }
