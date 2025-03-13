@@ -221,6 +221,31 @@ public class RepManager {
         }
     }
 
+    // deletes player entry from cache and SQL
+    public boolean deletePlayerEntry(String UUID) {
+        // remove from cache if exist
+        player_map.remove(UUID);
+
+        // delete from the SQL database.
+        try (Connection connection = db.getConnection();
+            PreparedStatement statement = connection.prepareStatement("DELETE FROM rep64_players WHERE uuid = ?")) {
+            statement.setString(1, UUID);
+            int rowsAffected = statement.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                javaPlugin.getLogger().info("Deleted player entry with UUID: " + UUID);
+                return true;
+            } else {
+                javaPlugin.getLogger().warning("No player entry found to delete for UUID: " + UUID);
+                return false;
+            }
+        } catch (SQLException e) {
+            javaPlugin.getLogger().warning("Exception: Could not delete player entry for UUID: " + UUID);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // saves player entry to cache(map) and database(SQL)
     public void savePlayerEntry(PlayerEntry playerEntryPassed) {
         PlayerEntry playerEntry = calculateRepAverage(playerEntryPassed);

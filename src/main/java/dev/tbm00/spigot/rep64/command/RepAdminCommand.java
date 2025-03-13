@@ -18,7 +18,7 @@ import dev.tbm00.spigot.rep64.model.RepEntry;
 public class RepAdminCommand implements TabExecutor {
     private final JavaPlugin javaPlugin;
     private final RepManager repManager;
-    private final String[] subCommands = new String[]{"mod", "show", "deleteRepsBy", "deleteRepsOn", "delete", "reset", "reloadCache"};
+    private final String[] subCommands = new String[]{"mod", "show", "deleteRepsBy", "deleteRepsOn", "delete", "reset", "reloadCache","deletePlayer"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
     private final double maxModifier;
     private final double minModifier;
@@ -72,6 +72,9 @@ public class RepAdminCommand implements TabExecutor {
                     return;
                 case "delete":
                     handleDeleteCommand(sender, args);
+                    return;
+                case "deleteplayer":
+                    handleDeletePlayerCommand(sender, args);
                     return;
                 case "deleterepsby":
                     handleDeleteRepsByCommand(sender, args);
@@ -187,13 +190,25 @@ public class RepAdminCommand implements TabExecutor {
         if (args.length == 2) {
             String targetName = args[1];
             repManager.resetPlayerEntry(repManager.getPlayerUUID(targetName));
-            sender.sendMessage(prefix + ChatColor.GREEN + "PlayerEntry should be deleted: " + targetName + "\n"
+            sender.sendMessage(prefix + ChatColor.GREEN + "PlayerEntry should be reset: " + targetName + "\n"
                 + ChatColor.GREEN + "All RepEntries created by player should be deleted: " + targetName + "\n"
                 + ChatColor.GREEN + "All RepEntries created on player should be deleted: " + targetName
             );
             return true;
         } else {
             sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin reset <player>");
+            return false;
+        }
+    }
+
+    private boolean handleDeletePlayerCommand(CommandSender sender, String[] args) {
+        // /repadmin deleteplayer <player>
+        if (args.length == 2) {
+            repManager.deletePlayerEntry(repManager.getPlayerUUID(args[1]));
+            sender.sendMessage(prefix + ChatColor.GREEN + "PlayerEntry should be deleted: " + args[1]);
+            return true;
+        } else {
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /repadmin deletePlayer <target>");
             return false;
         }
     }
