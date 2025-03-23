@@ -221,6 +221,31 @@ public class RepManager {
         }
     }
 
+    // returns rep shown from cache(map) first
+    // if not found, returns  rep shown from sql
+    // if not found, returns -1
+    public double getRepShown(String UUID) {
+        if (player_map.containsKey(UUID)) {
+            return player_map.get(UUID).getRepShown();
+        } else {
+            try (Connection connection = db.getConnection();
+                PreparedStatement statement = connection.prepareStatement("SELECT * FROM rep64_players WHERE uuid = ?")) {
+                statement.setString(1, UUID);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getDouble("rep_shown");
+                    }
+                }
+            } catch (SQLException e) {
+                javaPlugin.getLogger().warning("Exception: Could not find player entry!");
+                e.printStackTrace();
+                return -1;
+            }
+            javaPlugin.getLogger().warning("Error: Could not find player entry!");
+            return -1;
+        }
+    }
+
     // deletes player entry from cache and SQL
     public boolean deletePlayerEntry(String UUID) {
         // remove from cache if exist

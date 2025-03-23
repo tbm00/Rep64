@@ -57,7 +57,7 @@ Created by tbm00 for play.mc64.wtf.
 
 ## Config
 ```
-# Rep64 v1.2.2 by @tbm00
+# Rep64 v1.2.3 by @tbm00
 # https://github.com/tbm00/Rep64
 
 mysql:
