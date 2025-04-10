@@ -164,7 +164,7 @@ public class RepManager {
                 e.printStackTrace();
                 return null;
             }
-            javaPlugin.getLogger().warning("Error: Could not find UUID!");
+            //javaPlugin.getLogger().warning("Error: Could not find UUID!");
             return null;
         }
     }
