@@ -216,7 +216,7 @@ public class RepManager {
                 e.printStackTrace();
                 return null;
             }
-            javaPlugin.getLogger().warning("Error: Could not find player entry!");
+            //javaPlugin.getLogger().warning("Error: Could not find player entry!");
             return null;
         }
     }
@@ -241,7 +241,7 @@ public class RepManager {
                 e.printStackTrace();
                 return -1;
             }
-            javaPlugin.getLogger().warning("Error: Could not find player entry!");
+            //javaPlugin.getLogger().warning("Error: Could not find player entry!");
             return -1;
         }
     }
